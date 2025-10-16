@@ -1,0 +1,82 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
+  first_name  String
+  last_name   String
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @default(now()) @updatedAt
+  verified    Boolean       @default(false)
+  ApiKey      ApiKey[]
+  Connection  Connection[]
+  PostHistory PostHistory[]
+
+  @@map("user")
+}
+
+model ApiKey {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  key_index  String   @unique
+  name       String?
+  key        String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  expires_at DateTime
+  user       User     @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@map("api_key")
+}
+
+model Connection {
+  id                 Int           @id @default(autoincrement())
+  user_id            Int
+  connection_slug    String        @unique
+  display_name       String?
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @default(now()) @updatedAt
+  user               User          @relation(fields: [user_id], references: [id])
+  code               String?
+  state              String?
+  scopes             String?
+  access_token       String?
+  refresh_token      String?
+  expires_in         Int
+  refresh_expires_in Int
+  social_media       String?
+  open_id            String?       @unique
+  union_id           String?
+  avatar_url         String?
+  PostHistory        PostHistory[]
+
+  @@index([user_id])
+  @@map("connection")
+}
+
+model PostHistory {
+  id            Int        @id @default(autoincrement())
+  user_id       Int
+  connection_id Int
+  publish_id    String
+  title         String?
+  caption       String?
+  media_type    String?
+  privacy       String?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @default(now()) @updatedAt
+  user          User       @relation(fields: [user_id], references: [id])
+  connection    Connection @relation(fields: [connection_id], references: [id])
+
+  @@index([user_id])
+  @@map("post_history")
+}
