@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@prisma/adapter-neon": "^6.17.1",
+    "@prisma/adapter-pg": "^6.17.1",
     "@prisma/client": "^6.17.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-separator": "^1.1.7",

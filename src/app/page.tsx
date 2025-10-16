@@ -1,25 +1,13 @@
+import Navbar from "@/components/custom/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#FFE66D]">
+    <div className="min-h-screen bg-[#FFE66D] w-full">
       {/* Header */}
-      <header className="border-b-4 border-black bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
-          <div className="flex gap-3 align-middle items-center">
-            <Image src="/autoposting.svg" alt="autoposting" width={75} height={75} />
-            <h1 className="text-2xl sm:text-3xl font-black">autoposting.my.id</h1>
-          </div>
-          <div className="flex gap-3">
-            <Button size="sm" rounded="md">
-              Sign In
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -78,7 +66,7 @@ export default function Home() {
             <div className="text-5xl mb-4">🔒</div>
             <CardTitle>Multi-Platform</CardTitle>
             <CardDescription>
-              Currently supporting TikTok with more platforms in development.
+              Currently supporting TikTok with more platforms in development. We are working hard to make it the simplest APIs for all social media platforms.
             </CardDescription>
           </Card>
 
