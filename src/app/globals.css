@@ -112,6 +112,51 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Neo-Brutalist Sonner Toasts */
+[data-sonner-toast] {
+  border: 3px solid black !important;
+  background: white !important;
+  color: black !important;
+  border-radius: 0 !important;
+  font-weight: 700 !important;
+  box-shadow: 6px 6px 0px black !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-sonner-toast]:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 8px 8px 0px black !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-size: 1rem !important;
+  text-transform: uppercase;
+}
+
+[data-sonner-toast] [data-description] {
+  font-size: 0.9rem !important;
+  font-weight: 500;
+}
+
+/* Optional: custom colors for types */
+[data-sonner-toast][data-type="success"] {
+  background: #00ff90 !important;
+  border-color: black !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: #ff4040 !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  background: #00bfff !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background: #ffd700 !important;
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
