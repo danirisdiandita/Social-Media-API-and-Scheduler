@@ -2,6 +2,7 @@ import Navbar from "@/components/custom/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -11,14 +12,14 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="text-center space-y-8">
+        <div className="text-center space-y-8 flex flex-col items-center">
           {/* Beta Badge */}
-          <div className="inline-block">
+          <div className="flex gap-2 items-center">
             <span className="px-4 py-2 bg-[#A6FAFF] border-2 border-black font-bold text-sm uppercase">
-              🚀 Currently in Beta
+              🚀 Currently in Beta only available for TikTok
             </span>
+            <Image src="/TikTok_Icon_Black_Circle.png" alt="Tiktok Icon" width={25} height={25} />
           </div>
-
           {/* Main Heading */}
           <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black leading-tight">
             Post Your Social Media<br />
@@ -39,7 +40,7 @@ export default function Home() {
             <Button size="lg" rounded="full" className="w-full sm:w-auto min-w-[200px]">
               Get Started
             </Button>
-          
+
           </div>
         </div>
       </section>
@@ -92,6 +93,7 @@ export default function Home() {
             {/* TikTok - Active */}
             <div className="border-2 border-black p-6 bg-[#B4F8C8]">
               <div className="text-4xl mb-3">✅</div>
+              <Image src="/TikTok_Icon_Black_Circle.png" alt="Tiktok Icon" width={25} height={25} />
               <h4 className="text-xl font-black mb-2">TikTok</h4>
               <span className="inline-block px-3 py-1 bg-green-500 text-white text-xs font-bold border border-black">
                 ACTIVE

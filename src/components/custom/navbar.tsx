@@ -1,6 +1,6 @@
 import React from 'react'
 import Image from 'next/image'
-import { Button } from '@/components/ui/button'
+import StartButton from './start-button'
 
 
 const Navbar = () => {
@@ -12,9 +12,7 @@ const Navbar = () => {
             <h1 className="text-2xl sm:text-3xl font-black">autoposting.my.id</h1>
           </div>
           <div className="flex gap-3">
-            <Button size="sm" rounded="md">
-              Sign In
-            </Button>
+            <StartButton />
           </div>
         </div>
       </header>
