@@ -5,8 +5,8 @@ import { Card } from "@/components/ui/card"
 import { signIn } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function GoogleLoginForm() {
     const session = useSession()
@@ -17,15 +17,13 @@ export default function GoogleLoginForm() {
         signIn("google", { redirectTo: "/dashboard" })
     }
     return (
-        <div className="mx-auto min-h-screen flex items-center justify-center p-4 bg-[#FFE66D]">
+        <div className="w-full min-h-screen flex items-center justify-center p-4 bg-[#FFE66D]">
             <Card className="w-full max-w-md bg-white shadow-[12px_12px_0px_rgba(0,0,0,1)]">
                 {/* Header */}
                 <div className="space-y-4 text-center p-8 border-b-4 border-black">
                     <div className="mx-auto w-fit flex items-center gap-3 mb-4">
-                        <div className="w-16 h-16 bg-[#A6FAFF] border-4 border-black flex items-center justify-center">
-                            <div className="w-10 h-10 bg-[#79F7FF] border-2 border-black transform rotate-45"></div>
-                        </div>
-                        <h1 className="text-3xl font-black">AutoPost.my.id</h1>
+                        <Image src="/autoposting.svg" alt="Logo" width={50} height={50} />
+                        <h1 className="text-3xl font-black">AutoPosting.my.id</h1>
                     </div>
                     <h2 className="text-4xl font-black text-black">Welcome Back!</h2>
                     <p className="text-lg font-medium text-black">
