@@ -37,9 +37,12 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Button size="lg" rounded="full" className="w-full sm:w-auto min-w-[200px]">
+            <Link 
+              href="/login" 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all border-2 border-black bg-[#A6FAFF] hover:bg-[#79F7FF] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:bg-[#00E1EF] h-14 px-6 rounded-full w-full sm:w-auto min-w-[200px]"
+            >
               Get Started
-            </Button>
+            </Link>
 
           </div>
         </div>
@@ -137,9 +140,9 @@ export default function Home() {
           <p className="text-xl sm:text-2xl mb-8 font-medium">
             Join the beta and start posting to TikTok via API today!
           </p>
-          <Button size="lg" rounded="full" variant="outline" className="bg-white min-w-[250px]">
+          <Link href="/login" className="bg-white border-4 border-black min-w-[250px] rounded-full px-8 py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all">
             Get API Access
-          </Button>
+          </Link>
         </div>
       </section>
 

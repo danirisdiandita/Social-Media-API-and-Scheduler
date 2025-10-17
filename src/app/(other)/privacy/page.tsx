@@ -1,17 +1,17 @@
 import React from 'react'
-import DashboardNavbar from '@/components/custom/dashboard-navbar'
 import { Card } from '@/components/ui/card'
+import Navbar from '@/components/custom/navbar'
 
 const PrivacyPolicy = () => {
   return (
     <>
       <main className="min-h-screen w-full">
-        <DashboardNavbar />
+        <Navbar />
         <div className="min-h-screen bg-background">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             {/* Header */}
             <div className="mb-12">
-              <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy for Widya Social</h1>
+              <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy for AutoPosting.My.ID</h1>
               <p className="text-muted-foreground">Last Updated: {new Date().toISOString().split('T')[0]}</p>
             </div>
 
@@ -19,10 +19,10 @@ const PrivacyPolicy = () => {
               {/* Introduction */}
               <Card className="p-6">
                 <p className="text-muted-foreground leading-relaxed">
-                  Thank you for using Widya Social ("we," "us," or "our"). This Privacy Policy outlines how we collect, use, and protect your personal and non-personal information when you use our website and services.
+                  Thank you for using AutoPosting.My.ID ("we," "us," or "our"). This Privacy Policy outlines how we collect, use, and protect your personal and non-personal information when you use our website and services.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mt-4">
-                  By accessing or using Widya Social, you agree to the terms of this Privacy Policy. If you do not agree with the practices described in this policy, please do not use our services.
+                  By accessing or using AutoPosting.My.ID, you agree to the terms of this Privacy Policy. If you do not agree with the practices described in this policy, please do not use our services.
                 </p>
               </Card>
 
@@ -65,7 +65,7 @@ const PrivacyPolicy = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">3. TikTok API Services</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Widya Social uses TikTok API Services to enable cross-posting functionality to TikTok. By using our service to interact with TikTok, you are also subject to TikTok's Terms of Service and Privacy Policy.
+                  AutoPosting.My.ID uses TikTok API Services to enable cross-posting functionality to TikTok. By using our service to interact with TikTok, you are also subject to TikTok's Terms of Service and Privacy Policy.
                 </p>
               </Card>
 
@@ -97,7 +97,7 @@ const PrivacyPolicy = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">6. Children's Privacy</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Widya Social is not intended for children, and we do not collect any data from children.
+                  AutoPosting.My.ID is not intended for children, and we do not collect any data from children.
                 </p>
               </Card>
 
@@ -115,11 +115,9 @@ const PrivacyPolicy = () => {
                 <p className="text-muted-foreground leading-relaxed mb-3">
                   If you have any questions, concerns, or requests related to this Privacy Policy, you can contact us at:
                 </p>
+                
                 <p className="text-foreground">
-                  <strong>Company:</strong> Widya Wicara (PT. Widya Informasi Nusantara)
-                </p>
-                <p className="text-foreground">
-                  <strong>Email:</strong> <a href="mailto:dani@widyawicara.com" className="text-primary hover:underline">dani@widyawicara.com</a>
+                  <strong>Email:</strong> <a href="mailto:admin@autoposting.my.id" className="text-primary hover:underline">admin@autoposting.my.id</a>
                 </p>
               </Card>
 
@@ -142,7 +140,7 @@ const PrivacyPolicy = () => {
               {/* Consent */}
               <Card className="p-6 bg-muted/30">
                 <p className="text-muted-foreground leading-relaxed text-center">
-                  By using Widya Social, you consent to the terms of this Privacy Policy.
+                  By using AutoPosting.My.ID, you consent to the terms of this Privacy Policy.
                 </p>
               </Card>
             </div>

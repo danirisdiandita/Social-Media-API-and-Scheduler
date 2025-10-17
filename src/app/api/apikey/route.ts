@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         ])
 
         apiKeys = apiKeys.map((el) => {
-            el.key = 'widya-social-' + el.key_index + decrypt(JSON.parse(el.key))
+            el.key = 'autoposting-' + el.key_index + decrypt(JSON.parse(el.key))
             return el
         })
 

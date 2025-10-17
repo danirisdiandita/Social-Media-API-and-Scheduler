@@ -1,8 +1,8 @@
 import React from 'react'
-import DashboardNavbar from '@/components/custom/dashboard-navbar'
 import { Card } from '@/components/ui/card'
 import { Check, Clock } from 'lucide-react'
 import Image from 'next/image'
+import Navbar from '@/components/custom/navbar'
 
 const PlatformsPage = () => {
   const platforms = [
@@ -53,7 +53,7 @@ const PlatformsPage = () => {
   return (
     <>
       <main className="min-h-screen w-full">
-        <DashboardNavbar />
+        <Navbar />
         <div className="min-h-screen bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             {/* Header */}

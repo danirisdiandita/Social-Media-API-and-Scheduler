@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card"
 import { Check, Sparkles } from "lucide-react"
 import Link from "next/link"
-import DashboardNavbar from "@/components/custom/dashboard-navbar"
+import Navbar from "@/components/custom/navbar"
 
 export default function PricingPage() {
     return (
         <>
             <main className="min-h-screen w-full">
-                <DashboardNavbar />
+                <Navbar />
                 <div className="min-h-screen bg-background mx-auto">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                         {/* Header */}

@@ -13,7 +13,7 @@ const AboutPage = () => {
             {/* Header */}
             <div className="text-center mb-16">
               <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                About Widya Social
+                About AutoPosting.My.ID
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Simplifying social media integration for developers and businesses worldwide
@@ -21,19 +21,7 @@ const AboutPage = () => {
             </div>
 
             {/* Company Info */}
-            <div className="max-w-4xl mx-auto mb-16">
-              <Card className="p-8 bg-gradient-to-br from-primary/5 to-transparent">
-                <div className="text-center mb-6">
-                  <h2 className="text-3xl font-bold text-foreground mb-2">Widya Wicara</h2>
-                  <p className="text-lg text-muted-foreground">PT. Widya Informasi Nusantara</p>
-                </div>
-                <p className="text-muted-foreground leading-relaxed text-center max-w-3xl mx-auto">
-                  Widya Social is proudly developed and maintained by Widya Wicara (PT. Widya Informasi Nusantara), 
-                  a technology company dedicated to building innovative solutions that empower businesses 
-                  to connect with their audiences across multiple platforms seamlessly.
-                </p>
-              </Card>
-            </div>
+            
 
             {/* Mission & Vision */}
             <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-5xl mx-auto">

@@ -13,24 +13,24 @@ const TermsOfService = () => {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             {/* Header */}
             <div className="mb-12">
-              <h1 className="text-4xl font-bold text-foreground mb-4">Terms and Conditions for Widya Social</h1>
+              <h1 className="text-4xl font-bold text-foreground mb-4">Terms and Conditions for AutoPosting.My.ID</h1>
               <p className="text-muted-foreground">Last Updated: {new Date().toISOString().split('T')[0]}</p>
             </div>
 
             <div className="space-y-8">
               {/* Introduction */}
               <Card className="p-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Welcome to Widya Social!</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Welcome to AutoPosting.My.ID!</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  These Terms of Service ("Terms") govern your use of the Widya Social website and the services provided by Widya Social. By using our Website and services, you agree to these Terms.
+                  These Terms of Service ("Terms") govern your use of the AutoPosting.My.ID website and the services provided by AutoPosting.My.ID. By using our Website and services, you agree to these Terms.
                 </p>
               </Card>
 
               {/* Section 1 */}
               <Card className="p-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">1. Description of Widya Social</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4">1. Description of AutoPosting.My.ID</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Widya Social is a unified API platform that allows users to cross-post and upload content to multiple social media platforms from one place. Our service simplifies social media integration for developers and businesses.
+                  AutoPosting.My.ID is a unified API platform that allows users to cross-post and upload content to multiple social media platforms from one place. Our service simplifies social media integration for developers and businesses.
                 </p>
               </Card>
 
@@ -38,7 +38,7 @@ const TermsOfService = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">2. Third-Party Platform Terms of Service</h2>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  By using Widya Social to interact with third-party social media platforms, you also agree to be bound by their respective Terms of Service. This includes:
+                  By using AutoPosting.My.ID to interact with third-party social media platforms, you also agree to be bound by their respective Terms of Service. This includes:
                 </p>
                 <ul className="space-y-2 ml-6">
                   <li className="text-muted-foreground">
@@ -71,7 +71,7 @@ const TermsOfService = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">5. Ownership and Usage Rights</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  When you use Widya Social, you can sign in to your social media accounts and authorize access to your data to post to the platforms connected to the Widya Social service. You retain full ownership of your content, but grant us the necessary rights to post on your behalf to the platforms you authorize.
+                  When you use AutoPosting.My.ID, you can sign in to your social media accounts and authorize access to your data to post to the platforms connected to the AutoPosting.My.ID service. You retain full ownership of your content, but grant us the necessary rights to post on your behalf to the platforms you authorize.
                 </p>
               </Card>
 
@@ -79,7 +79,7 @@ const TermsOfService = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">6. Beta Testing and Pricing</h2>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  Widya Social is currently in beta testing and is offered free of charge. During this period:
+                  AutoPosting.My.ID is currently in beta testing and is offered free of charge. During this period:
                 </p>
                 <ul className="space-y-2 ml-6">
                   <li className="text-muted-foreground">
@@ -99,7 +99,7 @@ const TermsOfService = () => {
                 <h2 className="text-2xl font-bold text-foreground mb-4">7. Refund Policy</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Once paid plans are introduced, we will offer a full refund within 24 hours after the purchase. To request a refund, please contact us at{' '}
-                  <a href="mailto:dani@widyawicara.com" className="text-primary hover:underline">dani@widyawicara.com</a>.
+                  <a href="mailto:admin@autoposting.my.id" className="text-primary hover:underline">admin@autoposting.my.id</a>.
                 </p>
               </Card>
 
@@ -107,7 +107,7 @@ const TermsOfService = () => {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold text-foreground mb-4">8. Children's Privacy</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Widya Social is not intended for use by children, and we do not knowingly collect any data from children.
+                  AutoPosting.My.ID is not intended for use by children, and we do not knowingly collect any data from children.
                 </p>
               </Card>
 
@@ -134,17 +134,14 @@ const TermsOfService = () => {
                   For any questions or concerns regarding these Terms of Service, please contact us at:
                 </p>
                 <p className="text-foreground">
-                  <strong>Company:</strong> Widya Wicara (PT. Widya Informasi Nusantara)
-                </p>
-                <p className="text-foreground">
-                  <strong>Email:</strong> <a href="mailto:dani@widyawicara.com" className="text-primary hover:underline">dani@widyawicara.com</a>
+                  <strong>Email:</strong> <a href="mailto:admin@autoposting.my.id" className="text-primary hover:underline">admin@autoposting.my.id</a>
                 </p>
               </Card>
 
               {/* Thank You */}
               <Card className="p-6 bg-muted/30">
                 <p className="text-muted-foreground leading-relaxed text-center font-semibold">
-                  Thank you for using Widya Social!
+                  Thank you for using AutoPosting.My.ID!
                 </p>
               </Card>
             </div>
