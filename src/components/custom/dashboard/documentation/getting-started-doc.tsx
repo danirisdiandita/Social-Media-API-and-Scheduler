@@ -163,7 +163,7 @@ const GettingStartedDocs = () => {
                         3. Upload Your Files to AutoPosting
                     </CardTitle>
                     <CardDescription>
-                        Upload your files to AutoPosting using the API. Choose between photos or video based on your content type.
+                        Upload your files to AutoPosting using the API. Choose between photos or video based on your content type. Please for the photo/video restrictions, please refer to  <Link href="https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide" className="underline font-bold hover:text-[#FF6B6B]" target="_blank" rel="noopener noreferrer">TikTok Media Transfer Guide</Link>.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
