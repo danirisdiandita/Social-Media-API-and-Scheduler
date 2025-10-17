@@ -132,7 +132,7 @@ export async function GET(request: Request) {
         await discordLogger(`New TikTok connection created for user ${user.id}`);
 
         // Redirect to connections page
-        return NextResponse.redirect(new URL(Config.NEXT_PUBLIC_URL + '/dashboard/connections', request.url));
+        return NextResponse.redirect(new URL(Config.NEXT_PUBLIC_URL + '/connections', request.url));
 
     } catch (error) {
         console.error('TikTok OAuth error:', error);
