@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           <SidebarProvider>
-            <Toaster richColors closeButton  />
+            <Toaster richColors  />
             {children}
           </SidebarProvider>
         </SessionProvider>

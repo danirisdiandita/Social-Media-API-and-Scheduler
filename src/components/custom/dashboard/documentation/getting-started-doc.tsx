@@ -44,6 +44,17 @@ const GettingStartedDocs = () => {
 --form 'file=@"/Users/yourname/location/folder/video.mp4"'
 `
 
+    const uploadVideoLargeExample = `curl --location "${Config.NEXT_PUBLIC_URL}/api/file/presigner" \\
+--header 'Content-Type: application/json' \\
+--header 'Authorization: Bearer <API_KEY>' \\
+--data '{
+    "fileType": "video/mp4"
+}'`
+
+    const uploadVideoToPresignedUrlExample = `curl --location --request PUT '<SIGNED_URL>' \\
+--header 'Content-Type: video/mp4' \\
+--data-binary '@/Your/Path/To/Video.mp4'`
+
     const postVideoExample = `curl --location '${Config.NEXT_PUBLIC_URL}/api/posts' \\
 --header 'Content-Type: application/json' \\
 --header 'Authorization: Bearer <API KEY>' \\
@@ -155,7 +166,7 @@ const GettingStartedDocs = () => {
             </Card>
 
             <Card>
-                <CardHeader>
+                <CardHeader className='mb-2'>
                     <CardTitle className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-[#FFAAA5] border-1 border-black flex items-center justify-center">
                             <Terminal className="w-5 h-5" />
@@ -163,7 +174,7 @@ const GettingStartedDocs = () => {
                         3. Upload Your Files to AutoPosting
                     </CardTitle>
                     <CardDescription>
-                        Upload your files to AutoPosting using the API. Choose between photos or video based on your content type. Please for the photo/video restrictions, please refer to  <Link href="https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide" className="underline font-bold hover:text-[#FF6B6B]" target="_blank" rel="noopener noreferrer">TikTok Media Transfer Guide</Link>.
+                        Upload your files to AutoPosting using the API. Choose between photos or video based on your content type. Please for the photo/video restrictions, please refer to  <Link href="https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide" className="underline font-bold hover:text-[#FF6B6B]" target="_blank" rel="noopener noreferrer">TikTok Media Transfer Guide</Link>. Currently AutoPosting only support video less than 50 MB.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -173,7 +184,10 @@ const GettingStartedDocs = () => {
                                 Photos
                             </TabsTrigger>
                             <TabsTrigger value="video" className="cursor-pointer">
-                                Video
+                                Video ( less than 5 MB)
+                            </TabsTrigger>
+                            <TabsTrigger value="video-large" className="cursor-pointer">
+                                Video ( less than 50 MB)
                             </TabsTrigger>
                         </TabsList>
 
@@ -243,6 +257,78 @@ const GettingStartedDocs = () => {
                                 </pre>
                                 <p className="text-sm mt-2">
                                     The response returns a mapping of your original filename to the generated media ID. For videos, upload one video file at a time.
+                                </p>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="video-large" className="mt-4 space-y-4">
+                            <h4 className="text-sm font-black mb-2">Step 1: Getting the Presigned URL</h4>
+                            <p className="text-sm mt-2">
+                                Use this endpoint to upload a large video (up to 50MB) to get a presigned URL to upload your file.
+                            </p>
+                            <h4 className="text-sm font-black mb-2">Request:</h4>
+                            <div className="relative ">
+                                <pre className="bg-black text-[#00FF00] p-4 border-1 border-black overflow-x-auto font-mono">
+                                    <code className="text-sm">{uploadVideoLargeExample}</code>
+                                </pre>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-2 right-2 cursor-pointer bg-[#FFE66D] border-2 border-black hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(uploadVideoLargeExample)
+                                        toast.success('Copied!', {
+                                            position: 'top-center',
+                                        })
+                                    }}
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-black mb-2">Response:</h4>
+                                <pre className="bg-black text-[#00FF00] p-4 border-1 border-black overflow-x-auto font-mono">
+                                    <code className="text-sm">{`{
+    "message": "Success",
+    "data": {
+        "url": "<SIGNED_URL>",
+        "media_id": "<MEDIA_ID>"
+    }
+}`}</code>
+                                </pre>
+                                <p className="text-sm mt-2">
+                                    The response returns a <span className="font-black">presigned URL</span> and a <span className="font-black">media ID</span>. Use the <span className="font-black">presigned URL</span> to upload your file. Keep the <span className="font-black">media ID</span> for creating your post.
+                                </p>
+                            </div>
+                            <h4 className="text-sm font-bold mb-2">Step 2: File Upload to Presigned URL</h4>
+                            <p className="text-sm mt-2">
+                                From the previous step, you should have a <span className="font-black">presigned URL</span> and a <span className="font-black">media ID</span>. Use the <span className="font-black">presigned URL</span> to upload your file. Keep the <span className="font-black">media ID</span> for creating your post later.
+                            </p>
+                            <div className="relative">
+                                <pre className="bg-black text-[#00FF00] p-4 border-1 border-black overflow-x-auto font-mono">
+                                    <code className="text-sm">{uploadVideoToPresignedUrlExample}</code>
+                                </pre>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-2 right-2 cursor-pointer bg-[#FFE66D] border-2 border-black hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(uploadVideoToPresignedUrlExample)
+                                        toast.success('Copied!', {
+                                            position: 'top-center',
+                                        })
+                                    }}
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black mb-2">Response: 200 (empty body)</h4>
+                                <pre className="bg-black text-[#00FF00] p-4 border-1 border-black overflow-x-auto font-mono">
+                                    <code className="text-sm">{``}</code>
+                                </pre>
+                                <p className="text-sm mt-2">
+                                    The response returns a <span className="font-black">presigned URL</span> and a <span className="font-black">media ID</span>. Use the <span className="font-black">presigned URL</span> to upload your file. Keep the <span className="font-black">media ID</span> for creating your post.
                                 </p>
                             </div>
                         </TabsContent>
