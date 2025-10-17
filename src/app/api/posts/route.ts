@@ -10,10 +10,10 @@ export async function POST(request: Request) {
     // const body = await request.json()
 
     // 64 
-    const keyIndex = apiKey?.slice(13, 13 + 64)
+    const keyIndex = apiKey?.slice(12, 12 + 64)
 
     // 128 
-    const key = apiKey?.slice(13 + 64, 13 + 64 + 128) || ''
+    const key = apiKey?.slice(12 + 64, 12 + 64 + 128) || ''
 
     const apiKeyFromDatabase = await prisma.apiKey.findFirst({
         where: {
@@ -212,12 +212,11 @@ export async function POST(request: Request) {
                     const data_ = await response.json();
 
                     dataOutput.push(data_)
-
-                    if (data_.data.publish_id) {
+                    if (data_?.data?.publish_id) {
                         post_history_obj.push({
                             user_id: apiKeyFromDatabase.user_id,
                             connection_id: connection.id,
-                            publish_id: data_.data.publish_id,
+                            publish_id: data_?.data?.publish_id,
                             created_at: new Date(),
                             updated_at: new Date(),
                             title: title,

@@ -17,7 +17,6 @@ const s3 = new S3Client({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ fname: string }> }) {
   const { fname } = await params
-  console.log("fname", fname)
 
   const command = new GetObjectCommand({
     Bucket: Config.S3_BUCKET_NAME as string,

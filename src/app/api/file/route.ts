@@ -20,10 +20,10 @@ export async function POST(request: NextRequest) {
     // const body = await request.json()
 
     // 64 
-    const keyIndex = apiKey?.slice(13, 13 + 64)
+    const keyIndex = apiKey?.slice(12, 12 + 64)
 
     // 128 
-    const key = apiKey?.slice(13 + 64, 13 + 64 + 128) || ''
+    const key = apiKey?.slice(12 + 64, 12 + 64 + 128) || ''
 
     const apiKeyFromDatabase = await prisma.apiKey.findFirst({
         where: {

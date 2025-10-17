@@ -80,7 +80,7 @@ const GettingStartedDocs = () => {
                         <ul className="space-y-2 ml-4">
                             <li className="text-sm flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5" />
-                                <span>Navigate to the <Link href="/api-keys" className="underline font-bold hover:text-[#FF6B6B]">API Keys</Link> page</span>
+                                <span>Navigate to the <Link href="/api-keys" className="underline font-bold hover:text-[#FF6B6B]" target="_blank" rel="noopener noreferrer">API Keys</Link> page</span>
                             </li>
                             <li className="text-sm flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5" />
@@ -122,7 +122,7 @@ const GettingStartedDocs = () => {
                         <ul className="space-y-2 ml-4">
                             <li className="text-sm flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5" />
-                                <span>Go to the <Link href="/connections" className="underline font-bold hover:text-[#FF6B6B]">Connections</Link> page</span>
+                                <span>Go to the <Link href="/connections" className="underline font-bold hover:text-[#FF6B6B]" target="_blank" rel="noopener noreferrer">Connections</Link> page</span>
                             </li>
                             <li className="text-sm flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5" />
