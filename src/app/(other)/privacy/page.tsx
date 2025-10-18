@@ -133,7 +133,7 @@ const PrivacyPolicy = () => {
                   </p>
                 </div>
                 <p className="text-muted-foreground leading-relaxed">
-                  While we implement these security measures to protect your sensitive information, please be aware that no method of transmission over the Internet or method of electronic storage is 100% secure. We strive to use commercially acceptable means to protect your personal information, but we cannot guarantee its absolute security.
+                  While we implement these security measures to protect your sensitive information, please be aware that no method of transmission over the Internet or method of electronic storage is 100% secure. We strive to use any acceptable means to protect your personal information, but we cannot guarantee its absolute security.
                 </p>
               </Card>
 
