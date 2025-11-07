@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import Jimp from 'jimp';
 
 /**
  * Resizes an image file to ensure both width and height are less than 1080 pixels
@@ -10,20 +10,20 @@ import sharp from 'sharp';
 export async function resizeImageFile(file: File): Promise<File> {
   const MAX_DIMENSION = 1080;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const metadata = await sharp(buffer).metadata();
-  const { width = 0, height = 0 } = metadata;
+  const image = await Jimp.read(buffer);
+  const { width, height } = image.bitmap;
   if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
     return file;
   }
-  const resizedBuffer = await sharp(buffer)
-    .resize(MAX_DIMENSION, MAX_DIMENSION, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .toBuffer();
-  const uint8Array = new Uint8Array(resizedBuffer);
-  const resizedFile = new File([uint8Array], file.name, {
-    type: file.type,
+  if (width > height) {
+    image.resize(MAX_DIMENSION, Jimp.AUTO);
+  } else {
+    image.resize(Jimp.AUTO, MAX_DIMENSION);
+  }
+  const mimeType = file.type || Jimp.MIME_JPEG;
+  const resizedBuffer = await image.getBufferAsync(mimeType);
+  const resizedFile = new File([resizedBuffer], file.name, {
+    type: mimeType,
     lastModified: Date.now(),
   });
   return resizedFile;
