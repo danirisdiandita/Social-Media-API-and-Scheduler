@@ -31,3 +31,7 @@
 - Use readonly for immutable properties.
 - Use as const for literals that never change.
 - Use neobrutalism design for UI. with given Card, button, etc in components folder.
+
+
+IF ASKED TO EDIT, EDIT IT AND ANSWER ME CONCISELY.
+IF ASKED ABOUT OPINION, ANSWER TO THE POINT. DO NOT ADD EXTRA INFORMATION.

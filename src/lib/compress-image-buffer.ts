@@ -21,7 +21,8 @@ export async function resizeImageFile(file: File): Promise<File> {
       withoutEnlargement: true,
     })
     .toBuffer();
-  const resizedFile = new File([resizedBuffer], file.name, {
+  const uint8Array = new Uint8Array(resizedBuffer);
+  const resizedFile = new File([uint8Array], file.name, {
     type: file.type,
     lastModified: Date.now(),
   });
