@@ -1,4 +1,3 @@
-export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
