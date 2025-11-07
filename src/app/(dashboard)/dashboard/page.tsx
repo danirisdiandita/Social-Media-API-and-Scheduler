@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Rocket, FileText, Link2, Key, BookOpen } from 'lucide-react'
+import { FileText, Link2, Key, BookOpen, Image as ImageIcon, Video as VideoIcon } from 'lucide-react'
 
 interface PortalCard {
   title: string
@@ -14,6 +14,13 @@ interface PortalCard {
 }
 
 const portalCards: PortalCard[] = [
+  {
+    title: "Posts",
+    description: "Create and manage your posts",
+    url: "/posts",
+    icon: ImageIcon,
+    color: "bg-[#A0E7E5]",
+  },
   {
     title: "Post History",
     description: "View and manage all your scheduled and published posts",

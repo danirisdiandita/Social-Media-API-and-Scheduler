@@ -11,13 +11,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Rocket, FileText, Link2, Key, BookOpen, LogOut } from "lucide-react"
+import { Rocket, FileText, Link2, Key, BookOpen, LogOut, Image as ImageIcon, Video as VideoIcon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 
 const menuItems = [
+  {
+    title: "Posts",
+    url: "/posts",
+    icon: ImageIcon,
+  },
   {
     title: "Getting Started",
     url: "/dashboard",

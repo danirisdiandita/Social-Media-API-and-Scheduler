@@ -5,9 +5,9 @@ import useSWR from "swr";
 const fetcher = ([url, page, limit]: [string, number, number]) =>
     fetch(`${url}?page=${page}&limit=${limit}`).then((res) => res.json());
 
-export const useConnection = () => {
-    const [page, setPage] = useState(1)
-    const [limit, setLimit] = useState(10)
+export const useConnection = (defaultPage: number = 1, defaultLimit: number = 10) => {
+    const [page, setPage] = useState(defaultPage)
+    const [limit, setLimit] = useState(defaultLimit)
     const { data, error, isLoading, mutate } = useSWR(['/api/connection', page, limit], fetcher);
 
     const handlePageChange = (newPage: number) => {
@@ -63,6 +63,6 @@ export const useConnection = () => {
             }
         }
     }
-    return { data, error, isLoading, handlePageChange, handleLimitChange, nextPage, prevPage, isDisabledNext, isDisabledPrev, handleDeleteConnectionById };
+    return { data, error, isLoading, handlePageChange, handleLimitChange, nextPage, prevPage, isDisabledNext, isDisabledPrev, handleDeleteConnectionById, mutate };
 }
 

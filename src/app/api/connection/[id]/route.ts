@@ -74,11 +74,7 @@ export async function DELETE(
                     }
                 })
             } catch (error) {
-                if (error instanceof Error) {
-                    return new Response(error.message, { status: 500 })
-                } else {
-                    return new Response('Failed to refresh access token', { status: 500 })
-                }
+                throw error
             }
 
         }
@@ -89,14 +85,20 @@ export async function DELETE(
             await revokeTiktokAccess(access_token_!)
         } catch (error) {
             if (error instanceof Error) {
-                return new Response(error.message, { status: 500 })
+                throw error
             } else {
-                return new Response('Failed to revoke access token', { status: 500 })
+                throw error
             }
         }
 
 
         try {
+            // delete post history
+            await prisma.postHistory.deleteMany({
+                where: {
+                    connection_id: connectionId
+                }
+            })
             // Delete the connection
             await prisma.connection.delete({
                 where: {
@@ -105,9 +107,9 @@ export async function DELETE(
             })
         } catch (error) {
             if (error instanceof Error) {
-                return new Response(error.message, { status: 500 })
+                throw error
             } else {
-                return new Response('Failed to delete connection', { status: 500 })
+                throw error
             }
         }
 
@@ -118,10 +120,29 @@ export async function DELETE(
             }
         });
     } catch (error) {
-        if (error instanceof Error) {
-            return new Response(error.message, { status: 500 })
-        } else {
-            return new Response('Failed to delete connection', { status: 500 })
+        try {
+            await prisma.postHistory.deleteMany({
+                where: {
+                    connection_id: connectionId
+                }
+            })
+            // Delete the connection
+            await prisma.connection.delete({
+                where: {
+                    id: connectionId
+                }
+            })
+            if (error instanceof Error) {
+                return new Response(JSON.stringify({ message: "Connection Deleted with error" + error.message }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+            } else {
+                return new Response(JSON.stringify({ message: "Connection Deleted with unknown error"}), { status: 200, headers: { 'Content-Type': 'application/json' } })
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                return new Response(JSON.stringify({ error: "Error deleting connection: " + error.message }), { status: 500 })
+            } else {
+                return new Response(JSON.stringify({ error: 'Failed to delete connection with unknown error' }), { status: 500 })
+            }
         }
     }
 }
