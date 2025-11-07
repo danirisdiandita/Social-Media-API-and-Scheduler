@@ -22,7 +22,8 @@ export async function resizeImageFile(file: File): Promise<File> {
   }
   const mimeType = file.type || Jimp.MIME_JPEG;
   const resizedBuffer = await image.getBufferAsync(mimeType);
-  const resizedFile = new File([resizedBuffer], file.name, {
+  const uint8Array = new Uint8Array(resizedBuffer);
+  const resizedFile = new File([uint8Array], file.name, {
     type: mimeType,
     lastModified: Date.now(),
   });
