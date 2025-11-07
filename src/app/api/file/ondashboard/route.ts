@@ -4,6 +4,7 @@ import { PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-
 import { Config } from "@/constants/config";
 import { auth } from "../../../../../auth";
 import { prisma } from "@/lib/prisma";
+import { resizeImageFile } from "@/lib/compress-image-buffer";
 
 const s3 = new S3Client({
     region: "auto",
@@ -71,11 +72,13 @@ export async function POST(request: NextRequest) {
 
         // Upload each file
         for (const file of files) {
+            // resize image with max width or height is 1080 px 
+            const resizedFile = await resizeImageFile(file);
             // Convert file to buffer
-            const bytes = await file.arrayBuffer();
+            const bytes = await resizedFile.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            const fileType = file.type;
+            const fileType = resizedFile.type;
             // Use original filename if parameter is set, otherwise generate UUID-based name
             const fileName = useOriginalFilename 
                 ? file.name 
