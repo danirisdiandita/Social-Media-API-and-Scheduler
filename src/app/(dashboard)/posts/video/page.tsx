@@ -57,7 +57,8 @@ const VideoPostPage = () => {
     icon: socialMediaIcons[conn.social_media.toLowerCase()] || '🔗',
     socialMedia: conn.social_media,
     avatarUrl: conn.avatar_url,
-    connectionSlug: conn.connection_slug
+    connectionSlug: conn.connection_slug,
+    username: conn.username
   })) || []
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -200,9 +201,8 @@ const VideoPostPage = () => {
               <Label className="text-base font-black uppercase">Upload Videos</Label>
               <div
                 {...getRootProps()}
-                className={`border-4 border-black p-8 text-center transition-all ${
-                  isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                } ${isDragActive ? 'bg-purple-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
+                className={`border-4 border-black p-8 text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  } ${isDragActive ? 'bg-purple-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
               >
                 <input {...getInputProps()} disabled={isProcessing} />
                 <Upload className="w-12 h-12 mx-auto mb-4 text-black" strokeWidth={2.5} />
@@ -270,17 +270,15 @@ const VideoPostPage = () => {
                         key={connection.id}
                         onClick={() => toggleConnection(connection.id)}
                         disabled={isProcessing}
-                        className={`p-4 border-4 border-black text-center transition-all ${
-                          isProcessing ? 'cursor-not-allowed opacity-50' : ''
-                        } ${
-                          selectedConnections.includes(connection.id)
+                        className={`p-4 border-4 border-black text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
+                          } ${selectedConnections.includes(connection.id)
                             ? 'bg-purple-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
                             : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
-                        }`}
+                          }`}
                       >
                         {connection.avatarUrl ? (
-                          <img 
-                            src={connection.avatarUrl} 
+                          <img
+                            src={connection.avatarUrl}
                             alt={connection.name}
                             className="w-12 h-12 border-2 border-black mx-auto mb-2 object-cover"
                           />
@@ -288,7 +286,12 @@ const VideoPostPage = () => {
                           <div className="text-3xl mb-2">{connection.icon}</div>
                         )}
                         <p className="text-sm font-bold truncate">{connection.name}</p>
-                        <p className="text-xs font-medium capitalize">{connection.socialMedia}</p>
+                        {connection.username && (
+                          <p className="text-[10px] font-medium text-gray-600 truncate">
+                            Creator&apos;s Nickname: <span className="font-bold">@{connection.username}</span>
+                          </p>
+                        )}
+                        <p className="text-xs font-medium capitalize mt-1">{connection.socialMedia}</p>
                       </button>
                     ))}
                   </div>
@@ -305,76 +308,76 @@ const VideoPostPage = () => {
               )}
             </div>
 
-          {/* Post Options */}
-          <div className="flex gap-6">
-            <div className="flex-1 space-y-3">
-              <Label className="text-base font-black uppercase">Post Options</Label>
-              <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
-                <RadioGroupItem value="direct" id="direct" />
-                <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Send className="w-4 h-4" />
-                  <span>Post Directly</span>
-                </Label>
-                <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
-                <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
-                  <CalendarIcon className="w-4 h-4" />
-                  <span>Schedule Post</span>
-                  <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
-                </Label>
-              </RadioGroup>
-            </div>
+            {/* Post Options */}
+            <div className="flex gap-6">
+              <div className="flex-1 space-y-3">
+                <Label className="text-base font-black uppercase">Post Options</Label>
+                <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
+                  <RadioGroupItem value="direct" id="direct" />
+                  <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Send className="w-4 h-4" />
+                    <span>Post Directly</span>
+                  </Label>
+                  <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
+                  <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
+                    <CalendarIcon className="w-4 h-4" />
+                    <span>Schedule Post</span>
+                    <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
+                  </Label>
+                </RadioGroup>
+              </div>
 
-            {/* Schedule Options */}
-            {postType === 'schedule' && (
-              <div className="flex-1 space-y-3 p-4 border-4 border-black bg-purple-100">
-                <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
-                <div className="flex gap-4">
-                  <div className="flex flex-col gap-3">
-                    <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
-                      <CalendarIcon className="w-4 h-4" />
-                      Date
-                    </Label>
-                    <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          id="date-picker"
-                          className="w-48 justify-between font-bold"
-                        >
-                          {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={scheduleDate}
-                          onSelect={(date) => {
-                            setScheduleDate(date)
-                            setOpenDatePicker(false)
-                          }}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
-                      <Clock className="w-4 h-4" />
-                      Time
-                    </Label>
-                    <Input
-                      type="time"
-                      id="time-picker"
-                      step="1"
-                      value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
-                      className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
-                    />
+              {/* Schedule Options */}
+              {postType === 'schedule' && (
+                <div className="flex-1 space-y-3 p-4 border-4 border-black bg-purple-100">
+                  <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
+                  <div className="flex gap-4">
+                    <div className="flex flex-col gap-3">
+                      <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
+                        <CalendarIcon className="w-4 h-4" />
+                        Date
+                      </Label>
+                      <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            id="date-picker"
+                            className="w-48 justify-between font-bold"
+                          >
+                            {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={scheduleDate}
+                            onSelect={(date) => {
+                              setScheduleDate(date)
+                              setOpenDatePicker(false)
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
+                        <Clock className="w-4 h-4" />
+                        Time
+                      </Label>
+                      <Input
+                        type="time"
+                        id="time-picker"
+                        step="1"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                        className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
             {/* Submit Button */}
             <div className="flex justify-end gap-3 pt-4">

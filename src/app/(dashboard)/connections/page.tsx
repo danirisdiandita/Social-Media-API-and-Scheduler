@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Copy, Loader2, Trash2, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Copy, Loader2, Trash2, ChevronLeft, ChevronRight, Users, ExternalLink } from "lucide-react";
 import { useConnection } from "@/hooks/useConnection";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ export type Connection = {
   updated_at?: string;
   avatar_url?: string;
   connection_slug?: string;
+  username?: string;
 };
 
 const socialMedia2Logo = {
@@ -60,6 +61,12 @@ export default function ConnectionsPage() {
     toast.success("Copied!", {
       position: "top-center",
     });
+  };
+
+  const handleUsernameClick = (username: string) => {
+    const handle = username.startsWith("@") ? username : `@${username}`;
+    copyToClipboard(handle);
+    window.open(`https://tiktok.com/${handle}`, "_blank");
   };
 
   return (
@@ -120,7 +127,16 @@ export default function ConnectionsPage() {
                           <h3 className="text-lg font-black uppercase">
                             {connection.display_name || "Unknown"}
                           </h3>
-                          <div className="text-xs font-bold">
+                          {connection.username && (
+                            <button
+                              className="text-xs font-medium text-gray-600 lowercase cursor-pointer hover:text-black transition-colors flex items-center gap-1 group"
+                              onClick={() => handleUsernameClick(connection.username!)}
+                            >
+                              Creator&apos;s Nickname: <span className="font-bold">@{connection.username}</span>
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          )}
+                          <div className="text-xs font-bold mt-2">
                             {socialMedia2Logo[connection.social_media as keyof typeof socialMedia2Logo] || connection.social_media}
                           </div>
                         </div>

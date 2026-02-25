@@ -1,4 +1,5 @@
 import { Config } from "@/constants/config"
+import { TiktokCreatorInfoResponse } from "@/types/tiktok";
 
 export const refreshTiktokToken = async (refresh_token: string) => {
     const updated_at = new Date();
@@ -38,6 +39,18 @@ export const revokeTiktokAccess = async (access_token: string) => {
             token: access_token
         }
         )
+    })
+    const data = await response.json()
+    return data
+}
+
+export const getTiktokCreatorInfo = async (access_token: string): Promise<TiktokCreatorInfoResponse> => {
+    const response = await fetch('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${access_token}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+        },
     })
     const data = await response.json()
     return data
