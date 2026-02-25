@@ -110,7 +110,8 @@ const PhotoPostPage = () => {
         icon: socialMediaIcons[conn.social_media.toLowerCase()] || '🔗',
         socialMedia: conn.social_media,
         avatarUrl: conn.avatar_url,
-        connectionSlug: conn.connection_slug
+        connectionSlug: conn.connection_slug,
+        username: conn.username
     })) || []
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -263,208 +264,209 @@ const PhotoPostPage = () => {
                             </div>
                         </div>
                     ) : (
-                    <div className="max-w-4xl mx-auto space-y-6">
-                        {/* Image Upload Section */}
-                        <div className="space-y-3">
-                            <Label className="text-base font-black uppercase">Upload Images</Label>
-                            <div
-                                {...getRootProps()}
-                                className={`border-4 border-black p-8 text-center transition-all ${
-                                    isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                                } ${isDragActive ? 'bg-yellow-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
-                            >
-                                <input {...getInputProps()} disabled={isProcessing} />
-                                <Upload className="w-12 h-12 mx-auto mb-4 text-black" strokeWidth={2.5} />
-                                {isDragActive ? (
-                                    <p className="font-black text-black">Drop the images here...</p>
-                                ) : (
-                                    <div>
-                                        <p className="font-bold mb-1">Drag & drop images here, or click to select</p>
-                                        <p className="text-sm font-medium">Supports: PNG, JPG, JPEG, GIF, WEBP</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Preview Images */}
-                            {images.length > 0 && (
-                                <div className="flex flex-wrap gap-4 mt-4">
-                                    {images.map((file, index) => (
-                                        <div key={index} className="w-32">
-                                            <DraggableImage
-                                                file={file}
-                                                index={index}
-                                                moveImage={moveImage}
-                                                removeImage={removeImage}
-                                            />
+                        <div className="max-w-4xl mx-auto space-y-6">
+                            {/* Image Upload Section */}
+                            <div className="space-y-3">
+                                <Label className="text-base font-black uppercase">Upload Images</Label>
+                                <div
+                                    {...getRootProps()}
+                                    className={`border-4 border-black p-8 text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                        } ${isDragActive ? 'bg-yellow-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
+                                >
+                                    <input {...getInputProps()} disabled={isProcessing} />
+                                    <Upload className="w-12 h-12 mx-auto mb-4 text-black" strokeWidth={2.5} />
+                                    {isDragActive ? (
+                                        <p className="font-black text-black">Drop the images here...</p>
+                                    ) : (
+                                        <div>
+                                            <p className="font-bold mb-1">Drag & drop images here, or click to select</p>
+                                            <p className="text-sm font-medium">Supports: PNG, JPG, JPEG, GIF, WEBP</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Caption Section */}
-                        <div className="space-y-3">
-                            <Label htmlFor="caption" className="text-base font-black uppercase">Caption</Label>
-                            <Textarea
-                                id="caption"
-                                placeholder="Write a caption for your post..."
-                                value={caption}
-                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
-                                className="min-h-[120px] resize-none border-4 border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                                disabled={isProcessing}
-                            />
-                            <p className="text-xs font-bold">{caption.length} characters</p>
-                        </div>
-
-                        {/* Choose Connections */}
-                        <div className="space-y-3">
-                            <Label className="text-base font-black uppercase">Choose Connections</Label>
-                            {connections.length === 0 ? (
-                                <div className="p-8 border-4 border-black text-center bg-white">
-                                    <p className="font-bold">No connections available. Please connect your social media accounts first.</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {connections.map((connection: any) => (
-                                            <button
-                                                key={connection.id}
-                                                onClick={() => toggleConnection(connection.id)}
-                                                disabled={isProcessing}
-                                                className={`p-4 border-4 border-black text-center transition-all ${
-                                                    isProcessing ? 'cursor-not-allowed opacity-50' : ''
-                                                } ${selectedConnections.includes(connection.id)
-                                                    ? 'bg-blue-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
-                                                    : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
-                                                    }`}
-                                            >
-                                                {connection.avatarUrl ? (
-                                                    <img
-                                                        src={connection.avatarUrl}
-                                                        alt={connection.name}
-                                                        className="w-12 h-12 border-2 border-black mx-auto mb-2 object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="text-3xl mb-2">{connection.icon}</div>
-                                                )}
-                                                <p className="text-sm font-bold truncate">{connection.name}</p>
-                                                <p className="text-xs font-medium capitalize">{connection.socialMedia}</p>
-                                            </button>
+                                {/* Preview Images */}
+                                {images.length > 0 && (
+                                    <div className="flex flex-wrap gap-4 mt-4">
+                                        {images.map((file, index) => (
+                                            <div key={index} className="w-32">
+                                                <DraggableImage
+                                                    file={file}
+                                                    index={index}
+                                                    moveImage={moveImage}
+                                                    removeImage={removeImage}
+                                                />
+                                            </div>
                                         ))}
                                     </div>
-                                    {selectedConnections.length > 0 ? (
-                                        <p className="text-sm font-bold">
-                                            {selectedConnections.length} connection(s) selected
-                                        </p>
-                                    ) : (
-                                        <p className="text-sm font-bold">
-                                            No connection selected
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        {/* Post Options */}
-                        <div className="flex gap-6">
-                            <div className="flex-1 space-y-3">
-                                <Label className="text-base font-black uppercase">Post Options</Label>
-                                <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
-                                    <RadioGroupItem value="direct" id="direct" />
-                                    <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
-                                        <Send className="w-4 h-4" />
-                                        <span>Post Directly</span>
-                                    </Label>
-                                    <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
-                                    <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
-                                        <CalendarIcon className="w-4 h-4" />
-                                        <span>Schedule Post</span>
-                                        <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
-                                    </Label>
-                                </RadioGroup>
+                                )}
                             </div>
 
-                            {/* Schedule Options */}
-                            {postType === 'schedule' && (
-                                <div className="flex-1 space-y-3 p-4 border-4 border-black bg-yellow-100">
-                                    <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
-                                    <div className="flex gap-4">
-                                        <div className="flex flex-col gap-3">
-                                            <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
-                                                <CalendarIcon className="w-4 h-4" />
-                                                Date
-                                            </Label>
-                                            <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        id="date-picker"
-                                                        className="w-48 justify-between font-bold"
-                                                    >
-                                                        {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
-                                                        <ChevronDown className="w-4 h-4" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={scheduleDate}
-                                                        onSelect={(date) => {
-                                                            setScheduleDate(date)
-                                                            setOpenDatePicker(false)
-                                                        }}
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                        <div className="flex flex-col gap-3">
-                                            <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
-                                                <Clock className="w-4 h-4" />
-                                                Time
-                                            </Label>
-                                            <Input
-                                                type="time"
-                                                id="time-picker"
-                                                step="1"
-                                                value={scheduleTime}
-                                                onChange={(e) => setScheduleTime(e.target.value)}
-                                                className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                            {/* Caption Section */}
+                            <div className="space-y-3">
+                                <Label htmlFor="caption" className="text-base font-black uppercase">Caption</Label>
+                                <Textarea
+                                    id="caption"
+                                    placeholder="Write a caption for your post..."
+                                    value={caption}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
+                                    className="min-h-[120px] resize-none border-4 border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                    disabled={isProcessing}
+                                />
+                                <p className="text-xs font-bold">{caption.length} characters</p>
+                            </div>
 
-                        {/* Submit Button */}
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing}>
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={images.length === 0 || selectedConnections.length === 0 || isProcessing}
-                                className="gap-2"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        {isUploading ? 'Uploading...' : 'Posting...'}
-                                    </>
-                                ) : postType === 'direct' ? (
-                                    <>
-                                        <Send className="w-4 h-4" />
-                                        Post Now
-                                    </>
+                            {/* Choose Connections */}
+                            <div className="space-y-3">
+                                <Label className="text-base font-black uppercase">Choose Connections</Label>
+                                {connections.length === 0 ? (
+                                    <div className="p-8 border-4 border-black text-center bg-white">
+                                        <p className="font-bold">No connections available. Please connect your social media accounts first.</p>
+                                    </div>
                                 ) : (
                                     <>
-                                        <CalendarIcon className="w-4 h-4" />
-                                        Schedule Post
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {connections.map((connection: any) => (
+                                                <button
+                                                    key={connection.id}
+                                                    onClick={() => toggleConnection(connection.id)}
+                                                    disabled={isProcessing}
+                                                    className={`p-4 border-4 border-black text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
+                                                        } ${selectedConnections.includes(connection.id)
+                                                            ? 'bg-blue-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+                                                            : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
+                                                        }`}
+                                                >
+                                                    {connection.avatarUrl ? (
+                                                        <img
+                                                            src={connection.avatarUrl}
+                                                            alt={connection.name}
+                                                            className="w-12 h-12 border-2 border-black mx-auto mb-2 object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="text-3xl mb-2">{connection.icon}</div>
+                                                    )}
+                                                    <p className="text-sm font-bold truncate">{connection.name}</p>
+                                                    {connection.username && (
+                                                        <p className="text-[10px] font-bold text-gray-600 truncate">@{connection.username}</p>
+                                                    )}
+                                                    <p className="text-xs font-medium capitalize mt-1">{connection.socialMedia}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {selectedConnections.length > 0 ? (
+                                            <p className="text-sm font-bold">
+                                                {selectedConnections.length} connection(s) selected
+                                            </p>
+                                        ) : (
+                                            <p className="text-sm font-bold">
+                                                No connection selected
+                                            </p>
+                                        )}
                                     </>
                                 )}
-                            </Button>
+                            </div>
+
+                            {/* Post Options */}
+                            <div className="flex gap-6">
+                                <div className="flex-1 space-y-3">
+                                    <Label className="text-base font-black uppercase">Post Options</Label>
+                                    <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
+                                        <RadioGroupItem value="direct" id="direct" />
+                                        <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
+                                            <Send className="w-4 h-4" />
+                                            <span>Post Directly</span>
+                                        </Label>
+                                        <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
+                                        <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
+                                            <CalendarIcon className="w-4 h-4" />
+                                            <span>Schedule Post</span>
+                                            <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
+                                        </Label>
+                                    </RadioGroup>
+                                </div>
+
+                                {/* Schedule Options */}
+                                {postType === 'schedule' && (
+                                    <div className="flex-1 space-y-3 p-4 border-4 border-black bg-yellow-100">
+                                        <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex flex-col gap-3">
+                                                <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
+                                                    <CalendarIcon className="w-4 h-4" />
+                                                    Date
+                                                </Label>
+                                                <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            id="date-picker"
+                                                            className="w-48 justify-between font-bold"
+                                                        >
+                                                            {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={scheduleDate}
+                                                            onSelect={(date) => {
+                                                                setScheduleDate(date)
+                                                                setOpenDatePicker(false)
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <div className="flex flex-col gap-3">
+                                                <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
+                                                    <Clock className="w-4 h-4" />
+                                                    Time
+                                                </Label>
+                                                <Input
+                                                    type="time"
+                                                    id="time-picker"
+                                                    step="1"
+                                                    value={scheduleTime}
+                                                    onChange={(e) => setScheduleTime(e.target.value)}
+                                                    className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Submit Button */}
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={images.length === 0 || selectedConnections.length === 0 || isProcessing}
+                                    className="gap-2"
+                                >
+                                    {isProcessing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            {isUploading ? 'Uploading...' : 'Posting...'}
+                                        </>
+                                    ) : postType === 'direct' ? (
+                                        <>
+                                            <Send className="w-4 h-4" />
+                                            Post Now
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CalendarIcon className="w-4 h-4" />
+                                            Schedule Post
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
                     )}
                 </div>
             </div>

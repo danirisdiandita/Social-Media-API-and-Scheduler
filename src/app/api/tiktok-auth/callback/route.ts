@@ -70,7 +70,6 @@ export async function GET(request: Request) {
 
         const userInfoResponse = await fetch("https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name", requestOptions)
 
-
         if (!userInfoResponse.ok) {
             const errorData = await userInfoResponse.json();
             console.error('TikTok user info error:', errorData);
@@ -83,6 +82,25 @@ export async function GET(request: Request) {
                 open_id: userData.data.user.open_id,
             }
         })
+
+
+        const creatorInfoRequestOptions: RequestInit = {
+            method: 'POST',
+            headers: myHeaders,
+            redirect: 'follow' as const
+        };
+
+
+        const creatorInfoResponse = await fetch("https://open.tiktokapis.com/v2/post/publish/creator_info/query/", creatorInfoRequestOptions)
+
+        if (!creatorInfoResponse.ok) {
+            const errorData = await creatorInfoResponse.json();
+            console.error('TikTok creator info error:', errorData);
+            return new Response('Failed to fetch creator info from TikTok', { status: creatorInfoResponse.status });
+        }
+
+        const creatorInfoData = await creatorInfoResponse.json();
+
         if (!existingData) {
             const connection_slug = randomBytes(16).toString('hex')
             const connection = await prisma.connection.create({
@@ -96,6 +114,7 @@ export async function GET(request: Request) {
                     refresh_expires_in: tokenData.refresh_expires_in,
                     user_id: user.id,
                     display_name: userData.data.user.display_name,
+                    username: creatorInfoData.data.creator_username,
                     avatar_url: userData.data.user.avatar_url,
                     open_id: userData.data.user.open_id,
                     union_id: userData.data.user.union_id,
@@ -118,6 +137,7 @@ export async function GET(request: Request) {
                         expires_in: tokenData.expires_in,
                         refresh_expires_in: tokenData.refresh_expires_in,
                         display_name: userData.data.user.display_name,
+                        username: creatorInfoData.data.creator_username,
                         avatar_url: userData.data.user.avatar_url,
                         open_id: userData.data.user.open_id,
                         union_id: userData.data.user.union_id,

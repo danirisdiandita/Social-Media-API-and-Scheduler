@@ -43,6 +43,7 @@ model Connection {
   user_id            Int
   connection_slug    String        @unique
   display_name       String?
+  username           String?
   created_at         DateTime      @default(now())
   updated_at         DateTime      @default(now()) @updatedAt
   user               User          @relation(fields: [user_id], references: [id])
