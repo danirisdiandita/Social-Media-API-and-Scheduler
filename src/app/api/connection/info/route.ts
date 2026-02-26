@@ -2,14 +2,12 @@ import { decrypt } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { refreshTiktokToken } from "@/lib/tiktok-tool";
 
-
-
-
 export async function POST(request: Request) {
     const { connectionId } = await request.json();
+    console.log('connectionId', connectionId)
     const connection = await prisma.connection.findUnique({
         where: {
-            id: connectionId
+            id: Number(connectionId)
         }
     })
 
@@ -38,8 +36,6 @@ export async function POST(request: Request) {
 
         // try to refresh the token 
 
-
-
         const refreshTokenExpirationDate = new Date(connection.updated_at.getTime() + connection.refresh_expires_in * 1000);
 
         // do the refresh token request here 
@@ -58,7 +54,7 @@ export async function POST(request: Request) {
 
         await prisma.connection.update({
             where: {
-                id: connectionId
+                id: Number(connectionId)
             },
             data: {
                 access_token: refreshedToken.access_token,

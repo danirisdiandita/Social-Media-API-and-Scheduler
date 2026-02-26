@@ -18,6 +18,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Config } from '@/constants/config'
 import { usePost } from '@/hooks/usePost'
 import { toast } from 'sonner'
+import { useCreatorInfo } from '@/hooks/useCreatorInfo'
+import { useEffect } from 'react'
 
 interface DraggableImageProps {
     file: File
@@ -90,6 +92,13 @@ const PhotoPostPage = () => {
     const { data } = useConnection(1, 999)
     const { uploadFiles, isUploading } = useUploadFile()
     const { doPosting, isPosting } = usePost()
+    const { getCreatorInfo, creatorInfo } = useCreatorInfo()
+
+    useEffect(() => {
+        if (creatorInfo) {
+            console.log('Creator Info found:', creatorInfo)
+        }
+    }, [creatorInfo])
 
     const isProcessing = isUploading || isPosting
 
@@ -141,9 +150,14 @@ const PhotoPostPage = () => {
     }, [])
 
     const toggleConnection = (id: string) => {
+        const isSelecting = !selectedConnections.includes(id)
         setSelectedConnections(prev =>
-            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+            isSelecting ? [...prev, id] : prev.filter(c => c !== id)
         )
+
+        if (isSelecting) {
+            getCreatorInfo({ connectionId: id })
+        }
     }
 
     const handleSubmit = async () => {
