@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Calendar as CalendarIcon, Clock, Send, Image as ImageIcon, ChevronDown, GripVertical, CheckCircle2, Loader2 } from 'lucide-react'
+import { Upload, X, Calendar as CalendarIcon, Clock, Send, Image as ImageIcon, ChevronDown, GripVertical, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -272,7 +272,15 @@ const PhotoPostPage = () => {
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="flex flex-col h-screen w-full">
-                <div className="flex items-center justify-between p-4 border-b-4 border-black">
+                <div className="flex items-center gap-4 p-4 border-b-4 border-black">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.history.back()}
+                        className="w-10 h-10 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] shrink-0"
+                    >
+                        <ArrowLeft className="w-6 h-6 text-black" strokeWidth={3} />
+                    </Button>
                     <div>
                         <h1 className="text-2xl font-black">{postSuccess ? 'Post Successful!' : 'Create Photo Post'}</h1>
                         <p className="text-sm font-medium">
