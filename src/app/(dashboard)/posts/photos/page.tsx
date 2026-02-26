@@ -11,6 +11,13 @@ import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { useConnection } from '@/hooks/useConnection'
 import { useUploadFile } from '@/hooks/useUploadFile'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
@@ -93,10 +100,13 @@ const PhotoPostPage = () => {
     const { uploadFiles, isUploading } = useUploadFile()
     const { doPosting, isPosting } = usePost()
     const { getCreatorInfo, creatorInfo } = useCreatorInfo()
+    const [connectionDetails, setConnectionDetails] = useState<Record<string, any>>({})
+    const [privacySelections, setPrivacySelections] = useState<Record<string, string>>({})
 
     useEffect(() => {
-        if (creatorInfo) {
-            console.log('Creator Info found:', creatorInfo)
+        if (creatorInfo && creatorInfo.data) {
+            // This syncs the latest fetched info, but toggleConnection handles 
+            // the mapping to specific IDs for multiple selections.
         }
     }, [creatorInfo])
 
@@ -149,14 +159,23 @@ const PhotoPostPage = () => {
         })
     }, [])
 
-    const toggleConnection = (id: string) => {
+    const toggleConnection = async (id: string) => {
         const isSelecting = !selectedConnections.includes(id)
-        setSelectedConnections(prev =>
-            isSelecting ? [...prev, id] : prev.filter(c => c !== id)
-        )
 
         if (isSelecting) {
-            getCreatorInfo({ connectionId: id })
+            setSelectedConnections(prev => [...prev, id])
+            try {
+                const info = await getCreatorInfo({ connectionId: id })
+                if (info && info.data) {
+                    setConnectionDetails(prev => ({ ...prev, [id]: info.data }))
+                }
+            } catch (err) {
+                console.error(`Failed to fetch info for connection ${id}:`, err)
+            }
+        } else {
+            setSelectedConnections(prev => prev.filter((c: string) => c !== id))
+            // Keep the details for now, or remove:
+            // setConnectionDetails(prev => { const n = {...prev}; delete n[id]; return n; })
         }
     }
 
@@ -196,8 +215,17 @@ const PhotoPostPage = () => {
 
         // get image ids of each image 
 
-        const env_ = Config.NEXT_PUBLIC_ENV
         const imageIds = images.map(img => fileMapping[img.name])
+
+        const activePrivacy = privacySelections[selectedConnections[0]]
+
+        if (!activePrivacy && connectionDetails[selectedConnections[0]]?.privacy_level_options) {
+            toast.error('Please select a privacy level for your post', {
+                position: "top-center",
+            })
+            return
+        }
+
         const postPayload = {
             title: postData.caption,
             caption: postData.caption,
@@ -209,7 +237,7 @@ const PhotoPostPage = () => {
                 avatarUrl: string;
                 connectionSlug: string;
             }) => conn.connectionSlug),
-            privacy: env_ === 'development' ? 'SELF_ONLY' : 'PUBLIC_TO_EVERYONE',
+            privacy: activePrivacy,
             media_type: 'PHOTO',
             media_ids: imageIds
         }
@@ -380,6 +408,76 @@ const PhotoPostPage = () => {
                                     </>
                                 )}
                             </div>
+
+                            {/* Connection Details / Platform Settings */}
+                            {selectedConnections.filter((id: string) => connectionDetails[id]).length > 0 && (
+                                <div className="space-y-4">
+                                    <Label className="text-base font-black uppercase">Platform Integration Details</Label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {selectedConnections.map((id: string) => {
+                                            const info = connectionDetails[id];
+                                            const conn = connections.find((c: any) => c.id === id);
+                                            if (!info) return null;
+
+                                            return (
+                                                <div key={id} className="p-4 border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-14 h-14 border-4 border-black overflow-hidden shrink-0">
+                                                            <img
+                                                                src={info.creator_avatar_url || conn?.avatarUrl}
+                                                                alt={info.creator_nickname}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${info.creator_nickname || 'User'}&background=random`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <h4 className="font-black text-sm truncate uppercase">{info.creator_nickname}</h4>
+                                                            <p className="text-xs font-bold text-gray-500 truncate lowercase">@{info.creator_username}</p>
+                                                            <Badge className="mt-1 bg-yellow-300 text-black border-2 border-black font-black text-[10px] uppercase">
+                                                                {conn?.socialMedia}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-black uppercase">Privacy Level</Label>
+                                                        <Select
+                                                            value={privacySelections[id] || ""}
+                                                            onValueChange={(value) => setPrivacySelections(prev => ({ ...prev, [id]: value }))}
+                                                        >
+                                                            <SelectTrigger className="w-full border-4 border-black bg-white font-bold h-10">
+                                                                <SelectValue placeholder="CHOOSE PRIVACY..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="border-4 border-black">
+                                                                {info.privacy_level_options?.map((option: string) => (
+                                                                    <SelectItem key={option} value={option} className="font-bold">
+                                                                        {option.replace(/_/g, ' ')}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {!privacySelections[id] && (
+                                                            <p className="text-[10px] font-bold text-red-500 uppercase">Selection Required</p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mt-auto pt-2 border-t-2 border-black border-dashed flex flex-col gap-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-[10px] font-black uppercase">Max Video Limit:</span>
+                                                            <span className="text-[10px] font-bold">{info.max_video_post_duration_sec}s</span>
+                                                        </div>
+                                                        <p className="text-[9px] font-bold text-blue-600 leading-tight">
+                                                            * This is a photo post. Max video limit does not apply to this media type.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Post Options */}
                             <div className="flex gap-6">

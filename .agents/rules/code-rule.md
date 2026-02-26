@@ -24,3 +24,6 @@ trigger: always_on
 - **Shadows**: `shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]` or `shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]`
 - **Colors**: Use high-contrast Neobrutalist colors (e.g., bright yellows, teals, pinks).
 - **Typography**: Bold/Black font weights for headings, often uppercase.
+
+## Components: 
+- always use shadcn modified to neo brutalism

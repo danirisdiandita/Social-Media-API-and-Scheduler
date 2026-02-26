@@ -1,4 +1,4 @@
-import { decrypt } from "@/lib/encryption";
+import { decrypt, encrypt } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { refreshTiktokToken } from "@/lib/tiktok-tool";
 
@@ -57,8 +57,8 @@ export async function POST(request: Request) {
                 id: Number(connectionId)
             },
             data: {
-                access_token: refreshedToken.access_token,
-                refresh_token: refreshedToken.refresh_token,
+                access_token: JSON.stringify(encrypt(refreshedToken.access_token)),
+                refresh_token: JSON.stringify(encrypt(refreshedToken.refresh_token)),
                 expires_in: refreshedToken.expires_in,
                 refresh_expires_in: refreshedToken.refresh_expires_in
             }
