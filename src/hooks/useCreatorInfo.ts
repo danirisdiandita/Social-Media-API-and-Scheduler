@@ -29,7 +29,7 @@ export const useCreatorInfo = () => {
                 });
             },
             onSuccess: () => {
-                toast.success("Creator information updated successfully", {
+                toast.success("Please choose Privacy level of your platform's post", {
                     position: "top-center",
                 });
             },
