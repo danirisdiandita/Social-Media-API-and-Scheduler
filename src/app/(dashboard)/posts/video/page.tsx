@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2 } from 'lucide-react'
+import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -11,11 +11,20 @@ import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useConnection } from '@/hooks/useConnection'
 import { Config } from '@/constants/config'
 import { useUploadVideo } from '@/hooks/useUploadVideo'
 import { usePost } from '@/hooks/usePost'
 import { toast } from 'sonner'
+import { useCreatorInfo } from '@/hooks/useCreatorInfo'
+import { useEffect } from 'react'
 
 // Mock social media connections
 const mockConnections = [
@@ -37,6 +46,15 @@ const VideoPostPage = () => {
   const { data } = useConnection(1, 999)
   const { uploadVideos, isUploading } = useUploadVideo()
   const { doPosting, isPosting } = usePost()
+  const { getCreatorInfo, creatorInfo } = useCreatorInfo()
+  const [connectionDetails, setConnectionDetails] = useState<Record<string, any>>({})
+  const [privacySelections, setPrivacySelections] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (creatorInfo && creatorInfo.data) {
+      // Syncing occurs in toggleConnection or via effect if needed
+    }
+  }, [creatorInfo])
 
   const isProcessing = isUploading || isPosting
 
@@ -77,10 +95,22 @@ const VideoPostPage = () => {
     setVideos(prev => prev.filter((_, i) => i !== index))
   }
 
-  const toggleConnection = (id: string) => {
-    setSelectedConnections(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    )
+  const toggleConnection = async (id: string) => {
+    const isSelecting = !selectedConnections.includes(id)
+
+    if (isSelecting) {
+      setSelectedConnections(prev => [...prev, id])
+      try {
+        const info = await getCreatorInfo({ connectionId: id })
+        if (info && info.data) {
+          setConnectionDetails(prev => ({ ...prev, [id]: info.data }))
+        }
+      } catch (err) {
+        console.error(`Failed to fetch info for connection ${id}:`, err)
+      }
+    } else {
+      setSelectedConnections(prev => prev.filter((c: string) => c !== id))
+    }
   }
 
   const formatFileSize = (bytes: number) => {
@@ -114,8 +144,17 @@ const VideoPostPage = () => {
     console.log("fileMapping", fileMapping)
 
     // get video ids of each video 
-    const env_ = Config.NEXT_PUBLIC_ENV
     const videoIds = videos.map(vid => fileMapping[vid.name])
+
+    const activePrivacy = privacySelections[selectedConnections[0]]
+
+    if (!activePrivacy && connectionDetails[selectedConnections[0]]?.privacy_level_options) {
+      toast.error('Please select a privacy level for your post', {
+        position: "top-center",
+      })
+      return
+    }
+
     const postPayload = {
       title: postData.caption,
       caption: postData.caption,
@@ -127,7 +166,7 @@ const VideoPostPage = () => {
         avatarUrl: string;
         connectionSlug: string;
       }) => conn.connectionSlug),
-      privacy: env_ === 'development' ? 'SELF_ONLY' : 'PUBLIC_TO_EVERYONE',
+      privacy: activePrivacy,
       media_type: 'VIDEO',
       media_ids: videoIds
     }
@@ -161,7 +200,15 @@ const VideoPostPage = () => {
 
   return (
     <div className="flex flex-col h-screen w-full">
-      <div className="flex items-center justify-between p-4 border-b-4 border-black">
+      <div className="flex items-center gap-4 p-4 border-b-4 border-black">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => window.history.back()}
+          className="w-10 h-10 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] shrink-0"
+        >
+          <ArrowLeft className="w-6 h-6 text-black" strokeWidth={3} />
+        </Button>
         <div>
           <h1 className="text-2xl font-black">{postSuccess ? 'Post Successful!' : 'Create Video Post'}</h1>
           <p className="text-sm font-medium">
@@ -307,6 +354,76 @@ const VideoPostPage = () => {
                 </>
               )}
             </div>
+
+            {/* Connection Details / Platform Settings */}
+            {selectedConnections.filter((id: string) => connectionDetails[id]).length > 0 && (
+              <div className="space-y-4">
+                <Label className="text-base font-black uppercase">Platform Integration Details</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {selectedConnections.map((id: string) => {
+                    const info = connectionDetails[id];
+                    const conn = connections.find((c: any) => c.id === id);
+                    if (!info) return null;
+
+                    return (
+                      <div key={id} className="p-4 border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 border-4 border-black overflow-hidden shrink-0">
+                            <img
+                              src={info.creator_avatar_url || conn?.avatarUrl}
+                              alt={info.creator_nickname}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${info.creator_nickname || 'User'}&background=random`
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-black text-sm truncate uppercase">{info.creator_nickname}</h4>
+                            <p className="text-xs font-bold text-gray-500 truncate lowercase">@{info.creator_username}</p>
+                            <Badge className="mt-1 bg-purple-300 text-black border-2 border-black font-black text-[10px] uppercase">
+                              {conn?.socialMedia}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase">Privacy Level</Label>
+                          <Select
+                            value={privacySelections[id] || ""}
+                            onValueChange={(value) => setPrivacySelections(prev => ({ ...prev, [id]: value }))}
+                          >
+                            <SelectTrigger className="w-full border-4 border-black bg-white font-bold h-10">
+                              <SelectValue placeholder="CHOOSE PRIVACY..." />
+                            </SelectTrigger>
+                            <SelectContent className="border-4 border-black">
+                              {info.privacy_level_options?.map((option: string) => (
+                                <SelectItem key={option} value={option} className="font-bold">
+                                  {option.replace(/_/g, ' ')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {!privacySelections[id] && (
+                            <p className="text-[10px] font-bold text-red-500 uppercase">Selection Required</p>
+                          )}
+                        </div>
+
+                        <div className="mt-auto pt-2 border-t-2 border-black border-dashed flex flex-col gap-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase">Max Video Limit:</span>
+                            <span className="text-[10px] font-bold">{info.max_video_post_duration_sec}s</span>
+                          </div>
+                          <p className="text-[9px] font-bold text-purple-600 leading-tight">
+                            * Please ensure your video remains within this platform limit.
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Post Options */}
             <div className="flex gap-6">
