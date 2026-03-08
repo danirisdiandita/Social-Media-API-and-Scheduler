@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react'
+import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2, ArrowLeft, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -23,7 +23,7 @@ import { Config } from '@/constants/config'
 import { useUploadVideo } from '@/hooks/useUploadVideo'
 import { usePost } from '@/hooks/usePost'
 import { toast } from 'sonner'
-import { useCreatorInfo } from '@/hooks/useCreatorInfo'
+import { useCreatorInfo, SPAM_RISK_CODES } from '@/hooks/useCreatorInfo'
 import { useEffect } from 'react'
 
 // Mock social media connections
@@ -36,6 +36,7 @@ const mockConnections = [
 
 const VideoPostPage = () => {
   const [videos, setVideos] = useState<File[]>([])
+  const [title, setTitle] = useState('')
   const [caption, setCaption] = useState('')
   const [selectedConnections, setSelectedConnections] = useState<string[]>([])
   const [postType, setPostType] = useState<'direct' | 'schedule'>('direct')
@@ -49,6 +50,19 @@ const VideoPostPage = () => {
   const { getCreatorInfo, creatorInfo } = useCreatorInfo()
   const [connectionDetails, setConnectionDetails] = useState<Record<string, any>>({})
   const [privacySelections, setPrivacySelections] = useState<Record<string, string>>({})
+  const [previewVideo, setPreviewVideo] = useState<File | null>(null)
+  const [videoDuration, setVideoDuration] = useState<number | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [interactionSettings, setInteractionSettings] = useState<Record<string, Record<string, boolean>>>({})
+
+  useEffect(() => {
+    if (previewVideo) {
+      const url = URL.createObjectURL(previewVideo)
+      setPreviewUrl(url)
+      return () => URL.revokeObjectURL(url)
+    }
+    setPreviewUrl(null)
+  }, [previewVideo])
 
   useEffect(() => {
     if (creatorInfo && creatorInfo.data) {
@@ -79,8 +93,30 @@ const VideoPostPage = () => {
     username: conn.username
   })) || []
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setVideos(prev => [...prev, ...acceptedFiles])
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration);
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0]
+      setVideos([file])
+      setPreviewVideo(file)
+      try {
+        const duration = await getVideoDuration(file)
+        setVideoDuration(duration)
+      } catch (err) {
+        console.error("Failed to get video duration:", err)
+      }
+    }
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -88,11 +124,18 @@ const VideoPostPage = () => {
     accept: {
       'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm']
     },
-    multiple: true
+    multiple: false
   })
 
   const removeVideo = (index: number) => {
-    setVideos(prev => prev.filter((_, i) => i !== index))
+    setVideos(prev => {
+      const newVideos = prev.filter((_, i) => i !== index)
+      if (previewVideo === prev[index]) {
+        setPreviewVideo(newVideos.length > 0 ? newVideos[0] : null)
+        setVideoDuration(null)
+      }
+      return newVideos
+    })
   }
 
   const toggleConnection = async (id: string) => {
@@ -102,14 +145,20 @@ const VideoPostPage = () => {
       setSelectedConnections(prev => [...prev, id])
       try {
         const info = await getCreatorInfo({ connectionId: id })
-        if (info && info.data) {
-          setConnectionDetails(prev => ({ ...prev, [id]: info.data }))
+        if (info) {
+          setConnectionDetails(prev => ({ ...prev, [id]: info }))
         }
       } catch (err) {
         console.error(`Failed to fetch info for connection ${id}:`, err)
       }
     } else {
       setSelectedConnections(prev => prev.filter((c: string) => c !== id))
+      // Clean up settings if unselected
+      setInteractionSettings(prev => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
     }
   }
 
@@ -123,7 +172,8 @@ const VideoPostPage = () => {
 
   const handleSubmit = async () => {
     const postData = {
-      videos: videos.map(vid => ({ name: vid.name, size: vid.size })),
+      videos: videos.map(vid => ({ name: vid.name, size: vid.size, duration: videoDuration })),
+      title,
       caption,
       connections: connections.filter((conn: {
         id: string;
@@ -137,6 +187,17 @@ const VideoPostPage = () => {
       ...(postType === 'schedule' && { scheduleDate, scheduleTime })
     }
     console.log('Post data:', postData)
+
+    // Validate duration against all selected connections
+    for (const id of selectedConnections) {
+      const info = connectionDetails[id]?.data;
+      if (info && videoDuration && videoDuration > info.max_video_post_duration_sec) {
+        toast.error(`Video is too long for ${info.creator_nickname}. Max allowed is ${info.max_video_post_duration_sec}s`, {
+          position: "top-center",
+        })
+        return
+      }
+    }
 
     // uploading videos 
     const fileMapping = await uploadVideos(videos)
@@ -156,8 +217,8 @@ const VideoPostPage = () => {
     }
 
     const postPayload = {
-      title: postData.caption,
-      caption: postData.caption,
+      title: title || caption,
+      caption: caption,
       connections: postData.connections.map((conn: {
         id: string;
         name: string;
@@ -168,7 +229,10 @@ const VideoPostPage = () => {
       }) => conn.connectionSlug),
       privacy: activePrivacy,
       media_type: 'VIDEO',
-      media_ids: videoIds
+      media_ids: videoIds,
+      disable_comment: interactionSettings[selectedConnections[0]]?.comment === false,
+      disable_duet: interactionSettings[selectedConnections[0]]?.duet === false,
+      disable_stitch: interactionSettings[selectedConnections[0]]?.stitch === false,
     }
     console.log("postPayload", JSON.stringify(postPayload, null, 2))
     try {
@@ -193,9 +257,11 @@ const VideoPostPage = () => {
 
   const resetForm = () => {
     setVideos([])
+    setTitle('')
     setCaption('')
     setSelectedConnections([])
     setPostSuccess(false)
+    setVideoDuration(null)
   }
 
   return (
@@ -217,7 +283,7 @@ const VideoPostPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#fafafa]">
         {postSuccess ? (
           <div className="max-w-2xl mx-auto">
             <div className="flex flex-col items-center justify-center py-16 space-y-6">
@@ -242,287 +308,459 @@ const VideoPostPage = () => {
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Video Upload Section */}
-            <div className="space-y-3">
-              <Label className="text-base font-black uppercase">Upload Videos</Label>
-              <div
-                {...getRootProps()}
-                className={`border-4 border-black p-8 text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                  } ${isDragActive ? 'bg-purple-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
-              >
-                <input {...getInputProps()} disabled={isProcessing} />
-                <Upload className="w-12 h-12 mx-auto mb-4 text-black" strokeWidth={2.5} />
-                {isDragActive ? (
-                  <p className="font-black text-black">Drop the videos here...</p>
-                ) : (
-                  <div>
-                    <p className="font-bold mb-1">Drag & drop videos here, or click to select</p>
-                    <p className="text-sm font-medium">Supports: MP4, MOV, AVI, MKV, WEBM</p>
+          <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 items-start">
+            {/* Form Section */}
+            <div className="flex-1 w-full space-y-6">
+              {/* Video Upload Section */}
+              <div className="space-y-3">
+                <Label className="text-base font-black uppercase">Video Content</Label>
+                {videos.length === 0 && (
+                  <div
+                    {...getRootProps()}
+                    className={`border-4 border-black p-8 text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                      } ${isDragActive ? 'bg-purple-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
+                  >
+                    <input {...getInputProps()} disabled={isProcessing} />
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-black" strokeWidth={2.5} />
+                    {isDragActive ? (
+                      <p className="font-black text-black">Drop the video here...</p>
+                    ) : (
+                      <div>
+                        <p className="font-bold mb-1">Drag & drop video here, or click to select</p>
+                        <p className="text-sm font-medium">Supports: MP4, MOV, AVI, MKV, WEBM (One video only)</p>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
 
-              {/* Preview Videos */}
-              {videos.length > 0 && (
-                <div className="space-y-3 mt-4">
-                  {videos.map((file, index) => (
-                    <div key={index} className="flex items-center gap-4 p-4 border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                      <div className="flex-shrink-0 w-16 h-16 bg-purple-300 border-2 border-black flex items-center justify-center">
-                        <VideoIcon className="w-8 h-8 text-black" strokeWidth={2.5} />
+                {/* Video List */}
+                {videos.length > 0 && (
+                  <div className="space-y-3 mt-4">
+                    {videos.map((file, index) => (
+                      <div key={index} className={`flex items-center gap-4 p-4 border-4 border-black bg-white transition-all ${previewVideo === file ? 'ring-4 ring-purple-500 shadow-none translate-x-[2px] translate-y-[2px]' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}>
+                        <div className="flex-shrink-0 w-16 h-16 bg-purple-300 border-2 border-black flex items-center justify-center relative group cursor-pointer"
+                          onClick={() => setPreviewVideo(file)}>
+                          <VideoIcon className="w-8 h-8 text-black" strokeWidth={2.5} />
+                          <div className={`absolute inset-0 bg-black/20 flex items-center justify-center transition-opacity ${previewVideo === file ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            <Play className="w-6 h-6 text-white fill-white" />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold truncate">{file.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium">{formatFileSize(file.size)}</p>
+                            {videoDuration && (
+                              <>
+                                <span className="text-gray-400">•</span>
+                                <p className="text-sm font-bold text-purple-600">
+                                  {Math.floor(videoDuration / 60)}:{Math.floor(videoDuration % 60).toString().padStart(2, '0')}
+                                </p>
+                              </>
+                            )}
+                            {selectedConnections.some(id => {
+                              const info = connectionDetails[id]?.data;
+                              return info && videoDuration && videoDuration > info.max_video_post_duration_sec;
+                            }) && (
+                                <Badge className="bg-red-500 text-white border-2 border-black font-black text-[10px] uppercase h-5 animate-pulse">
+                                  ⚠️ TOO LONG FOR SOME ACCOUNTS
+                                </Badge>
+                              )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => removeVideo(index)}
+                            disabled={isProcessing}
+                            className="flex-shrink-0 p-2 bg-red-500 border-2 border-black hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px]"
+                          >
+                            <X className="w-5 h-5 text-white" strokeWidth={2.5} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold truncate">{file.name}</p>
-                        <p className="text-sm font-medium">{formatFileSize(file.size)}</p>
-                      </div>
-                      <button
-                        onClick={() => removeVideo(index)}
-                        disabled={isProcessing}
-                        className="flex-shrink-0 p-2 bg-red-500 border-2 border-black hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <X className="w-5 h-5 text-white" strokeWidth={2.5} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Caption Section */}
-            <div className="space-y-3">
-              <Label htmlFor="caption" className="text-base font-black uppercase">Caption</Label>
-              <Textarea
-                id="caption"
-                placeholder="Write a caption for your post..."
-                value={caption}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
-                className="min-h-[120px] resize-none border-4 border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                disabled={isProcessing}
-              />
-              <p className="text-xs font-bold">{caption.length} characters</p>
-            </div>
-
-            {/* Choose Connections */}
-            <div className="space-y-3">
-              <Label className="text-base font-black uppercase">Choose Connections</Label>
-              {connections.length === 0 ? (
-                <div className="p-8 border-4 border-black text-center bg-white">
-                  <p className="font-bold">No connections available. Please connect your social media accounts first.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {connections.map((connection: any) => (
-                      <button
-                        key={connection.id}
-                        onClick={() => toggleConnection(connection.id)}
-                        disabled={isProcessing}
-                        className={`p-4 border-4 border-black text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
-                          } ${selectedConnections.includes(connection.id)
-                            ? 'bg-purple-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
-                            : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
-                          }`}
-                      >
-                        {connection.avatarUrl ? (
-                          <img
-                            src={connection.avatarUrl}
-                            alt={connection.name}
-                            className="w-12 h-12 border-2 border-black mx-auto mb-2 object-cover"
-                          />
-                        ) : (
-                          <div className="text-3xl mb-2">{connection.icon}</div>
-                        )}
-                        <p className="text-sm font-bold truncate">{connection.name}</p>
-                        {connection.username && (
-                          <p className="text-[10px] font-medium text-gray-600 truncate">
-                            Creator&apos;s Nickname: <span className="font-bold">@{connection.username}</span>
-                          </p>
-                        )}
-                        <p className="text-xs font-medium capitalize mt-1">{connection.socialMedia}</p>
-                      </button>
                     ))}
                   </div>
-                  {selectedConnections.length > 0 ? (
-                    <p className="text-sm font-bold">
-                      {selectedConnections.length} connection(s) selected
-                    </p>
-                  ) : (
-                    <p className="text-sm font-bold">
-                      No connection selected
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Connection Details / Platform Settings */}
-            {selectedConnections.filter((id: string) => connectionDetails[id]).length > 0 && (
-              <div className="space-y-4">
-                <Label className="text-base font-black uppercase">Platform Integration Details</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedConnections.map((id: string) => {
-                    const info = connectionDetails[id];
-                    const conn = connections.find((c: any) => c.id === id);
-                    if (!info) return null;
+              {/* Title Section */}
+              <div className="space-y-3">
+                <Label htmlFor="title" className="text-base font-black uppercase">Post Title</Label>
+                <Input
+                  id="title"
+                  type="text"
+                  placeholder="Enter a title for your video post..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="border-4 border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white h-12 font-bold"
+                  disabled={isProcessing}
+                />
+              </div>
 
-                    return (
-                      <div key={id} className="p-4 border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-14 h-14 border-4 border-black overflow-hidden shrink-0">
+              {/* Caption Section */}
+              <div className="space-y-3">
+                <Label htmlFor="caption" className="text-base font-black uppercase">Caption</Label>
+                <Textarea
+                  id="caption"
+                  placeholder="Write a caption for your post..."
+                  value={caption}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaption(e.target.value)}
+                  className="min-h-[120px] resize-none border-4 border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white"
+                  disabled={isProcessing}
+                />
+                <p className="text-xs font-bold">{caption.length} characters</p>
+              </div>
+
+              {/* Choose Connections */}
+              <div className="space-y-3">
+                <Label className="text-base font-black uppercase">Choose Connections</Label>
+                {connections.length === 0 ? (
+                  <div className="p-8 border-4 border-black text-center bg-white">
+                    <p className="font-bold">No connections available. Please connect your social media accounts first.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {connections.map((connection: any) => (
+                        <button
+                          key={connection.id}
+                          onClick={() => toggleConnection(connection.id)}
+                          disabled={isProcessing}
+                          className={`p-4 border-4 border-black text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
+                            } ${selectedConnections.includes(connection.id)
+                              ? 'bg-purple-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+                              : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
+                            }`}
+                        >
+                          {connection.avatarUrl ? (
                             <img
-                              src={info.creator_avatar_url || conn?.avatarUrl}
-                              alt={info.creator_nickname}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${info.creator_nickname || 'User'}&background=random`
-                              }}
+                              src={connection.avatarUrl}
+                              alt={connection.name}
+                              className="w-12 h-12 border-2 border-black mx-auto mb-2 object-cover"
                             />
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="font-black text-sm truncate uppercase">{info.creator_nickname}</h4>
-                            <p className="text-xs font-bold text-gray-500 truncate lowercase">@{info.creator_username}</p>
-                            <Badge className="mt-1 bg-purple-300 text-black border-2 border-black font-black text-[10px] uppercase">
-                              {conn?.socialMedia}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs font-black uppercase">Privacy Level</Label>
-                          <Select
-                            value={privacySelections[id] || ""}
-                            onValueChange={(value) => setPrivacySelections(prev => ({ ...prev, [id]: value }))}
-                          >
-                            <SelectTrigger className="w-full border-4 border-black bg-white font-bold h-10">
-                              <SelectValue placeholder="CHOOSE PRIVACY..." />
-                            </SelectTrigger>
-                            <SelectContent className="border-4 border-black">
-                              {info.privacy_level_options?.map((option: string) => (
-                                <SelectItem key={option} value={option} className="font-bold">
-                                  {option.replace(/_/g, ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {!privacySelections[id] && (
-                            <p className="text-[10px] font-bold text-red-500 uppercase">Selection Required</p>
+                          ) : (
+                            <div className="text-3xl mb-2">{connection.icon}</div>
                           )}
-                        </div>
+                          <p className="text-sm font-bold truncate">{connection.name}</p>
+                          {connection.username && (
+                            <p className="text-[10px] font-medium text-gray-600 truncate">
+                              Creator&apos;s Nickname: <span className="font-bold">@{connection.username}</span>
+                            </p>
+                          )}
+                          <p className="text-xs font-medium capitalize mt-1">{connection.socialMedia}</p>
+                        </button>
+                      ))}
+                    </div>
+                    {selectedConnections.length > 0 ? (
+                      <p className="text-sm font-bold text-purple-600">
+                        ✨ {selectedConnections.length} connection(s) selected
+                      </p>
+                    ) : (
+                      <p className="text-sm font-bold text-gray-500">
+                        No connection selected
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
 
-                        <div className="mt-auto pt-2 border-t-2 border-black border-dashed flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase">Max Video Limit:</span>
-                            <span className="text-[10px] font-bold">{info.max_video_post_duration_sec}s</span>
+              {/* Connection Details / Platform Settings */}
+              {selectedConnections.filter((id: string) => connectionDetails[id]).length > 0 && (
+                <div className="space-y-4">
+                  <Label className="text-base font-black uppercase">Platform Integration Details</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedConnections.map((id: string) => {
+                      const info = connectionDetails[id]?.data;
+                      const error = connectionDetails[id]?.error;
+                      const conn = connections.find((c: any) => c.id === id);
+                      if (!info) return null;
+
+                      const isBlocked = error && SPAM_RISK_CODES.includes(error.code);
+
+                      return (
+                        <div key={id} className={`p-4 border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 ${isBlocked ? 'border-red-500 bg-red-50 opacity-90' : ''}`}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 border-4 border-black overflow-hidden shrink-0">
+                              <img
+                                src={info.creator_avatar_url || conn?.avatarUrl}
+                                alt={info.creator_nickname}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${info.creator_nickname || 'User'}&background=random`
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-black text-sm truncate uppercase">{info.creator_nickname}</h4>
+                              <p className="text-xs font-bold text-gray-500 truncate lowercase">@{info.creator_username}</p>
+                              <Badge className="mt-1 bg-purple-300 text-black border-2 border-black font-black text-[10px] uppercase">
+                                {conn?.socialMedia}
+                              </Badge>
+                            </div>
                           </div>
-                          <p className="text-[9px] font-bold text-purple-600 leading-tight">
-                            * Please ensure your video remains within this platform limit.
-                          </p>
+
+                          {isBlocked && (
+                            <div className="p-2 border-2 border-black bg-red-500 text-white font-black text-[10px] uppercase leading-tight">
+                              Posting Disabled: {error.message}
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-gray-500">Post Privacy</Label>
+                            <Select
+                              value={privacySelections[id] || ""}
+                              onValueChange={(value) => setPrivacySelections(prev => ({ ...prev, [id]: value }))}
+                              disabled={isBlocked}
+                            >
+                              <SelectTrigger className="w-full border-4 border-black bg-white font-bold h-10">
+                                <SelectValue placeholder="CHOOSE PRIVACY..." />
+                              </SelectTrigger>
+                              <SelectContent className="border-4 border-black">
+                                {info.privacy_level_options?.map((option: string) => (
+                                  <SelectItem key={option} value={option} className="font-bold">
+                                    {option.replace(/_/g, ' ')}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {!privacySelections[id] && !isBlocked && (
+                              <p className="text-[10px] font-bold text-red-500 uppercase">Selection Required</p>
+                            )}
+                          </div>
+
+                          {/* TikTok Interaction Settings */}
+                          {conn?.socialMedia?.toLowerCase() === 'tiktok' && (
+                            <div className="space-y-3 p-3 border-2 border-black bg-gray-50">
+                              <Label className="text-[10px] font-black uppercase text-gray-500">Allow users to:</Label>
+                              <div className="flex flex-col gap-2">
+                                {[
+                                  { id: 'comment', label: 'Comment', disabled: info.comment_disabled },
+                                  { id: 'duet', label: 'Duet', disabled: info.duet_disabled },
+                                  { id: 'stitch', label: 'Stitch', disabled: info.stitch_disabled }
+                                ].map((item) => (
+                                  <label
+                                    key={item.id}
+                                    className={`flex items-center gap-2 cursor-pointer ${item.disabled ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+                                  >
+                                    <div className="relative">
+                                      <input
+                                        type="checkbox"
+                                        checked={interactionSettings[id]?.[item.id] ?? !item.disabled}
+                                        onChange={(e) => {
+                                          if (item.disabled) return;
+                                          setInteractionSettings(prev => ({
+                                            ...prev,
+                                            [id]: {
+                                              ...(prev[id] || { comment: !info.comment_disabled, duet: !info.duet_disabled, stitch: !info.stitch_disabled }),
+                                              [item.id]: e.target.checked
+                                            }
+                                          }));
+                                        }}
+                                        disabled={item.disabled || isBlocked}
+                                        className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                      />
+                                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                      </div>
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase">{item.label}</span>
+                                    {item.disabled && (
+                                      <Badge variant="outline" className="text-[8px] h-4 px-1 border-black bg-gray-200">DISABLED</Badge>
+                                    )}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-auto pt-2 border-t-2 border-black border-dashed flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase">Max Video Limit:</span>
+                              <span className="text-[10px] font-bold">{info.max_video_post_duration_sec}s</span>
+                            </div>
+                            {videoDuration && videoDuration > info.max_video_post_duration_sec && (
+                              <p className="text-[9px] font-bold text-red-500 leading-tight uppercase bg-red-50 p-1 border border-red-200">
+                                ⚠️ Video is too long for this platform!
+                              </p>
+                            )}
+                            <p className="text-[9px] font-bold text-purple-600 leading-tight">
+                              * Please ensure your video remains within this platform limit.
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Post Options */}
-            <div className="flex gap-6">
-              <div className="flex-1 space-y-3">
-                <Label className="text-base font-black uppercase">Post Options</Label>
-                <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
-                  <RadioGroupItem value="direct" id="direct" />
-                  <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
-                    <Send className="w-4 h-4" />
-                    <span>Post Directly</span>
-                  </Label>
-                  <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
-                  <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
-                    <CalendarIcon className="w-4 h-4" />
-                    <span>Schedule Post</span>
-                    <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
-                  </Label>
-                </RadioGroup>
-              </div>
-
-              {/* Schedule Options */}
-              {postType === 'schedule' && (
-                <div className="flex-1 space-y-3 p-4 border-4 border-black bg-purple-100">
-                  <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col gap-3">
-                      <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
-                        <CalendarIcon className="w-4 h-4" />
-                        Date
-                      </Label>
-                      <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            id="date-picker"
-                            className="w-48 justify-between font-bold"
-                          >
-                            {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={scheduleDate}
-                            onSelect={(date) => {
-                              setScheduleDate(date)
-                              setOpenDatePicker(false)
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
-                        <Clock className="w-4 h-4" />
-                        Time
-                      </Label>
-                      <Input
-                        type="time"
-                        id="time-picker"
-                        step="1"
-                        value={scheduleTime}
-                        onChange={(e) => setScheduleTime(e.target.value)}
-                        className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
-                      />
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
+
+              {/* Post Options */}
+              <div className="flex gap-6">
+                <div className="flex-1 space-y-3">
+                  <Label className="text-base font-black uppercase">Post Options</Label>
+                  <RadioGroup value={postType} onValueChange={(value: any) => setPostType(value)} className='flex items-center gap-2 cursor-pointer flex-1'>
+                    <RadioGroupItem value="direct" id="direct" />
+                    <Label htmlFor="direct" className="flex items-center gap-2 cursor-pointer flex-1">
+                      <Send className="w-4 h-4" />
+                      <span>Post Directly</span>
+                    </Label>
+                    <RadioGroupItem value="schedule" id="schedule" className='flex justify-start' disabled />
+                    <Label htmlFor="schedule" className="flex items-center gap-2 cursor-not-allowed flex-1 opacity-50">
+                      <CalendarIcon className="w-4 h-4" />
+                      <span>Schedule Post</span>
+                      <Badge variant="outline" className="ml-2 text-xs border-2 border-black font-bold">Coming Soon</Badge>
+                    </Label>
+                  </RadioGroup>
+                </div>
+
+                {/* Schedule Options */}
+                {postType === 'schedule' && (
+                  <div className="flex-1 space-y-3 p-4 border-4 border-black bg-purple-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <Label className="text-base font-black uppercase">Schedule Date & Time</Label>
+                    <div className="flex gap-4">
+                      <div className="flex flex-col gap-3">
+                        <Label htmlFor="date-picker" className="px-1 flex items-center gap-2 font-bold">
+                          <CalendarIcon className="w-4 h-4" />
+                          Date
+                        </Label>
+                        <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date-picker"
+                              className="w-full xl:w-48 justify-between font-bold border-4 border-black"
+                            >
+                              {scheduleDate ? scheduleDate.toLocaleDateString() : "Select date"}
+                              <ChevronDown className="w-4 h-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0 border-4 border-black" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={scheduleDate}
+                              onSelect={(date) => {
+                                setScheduleDate(date)
+                                setOpenDatePicker(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <Label htmlFor="time-picker" className="px-1 flex items-center gap-2 font-bold">
+                          <Clock className="w-4 h-4" />
+                          Time
+                        </Label>
+                        <Input
+                          type="time"
+                          id="time-picker"
+                          step="1"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="bg-white border-4 border-black appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <p className="text-[10px] font-bold text-gray-500 mb-2 text-right uppercase italic leading-tight px-1">
+                By posting, you agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a>
+              </p>
+              <div className="flex justify-end gap-3 pt-4 border-t-4 border-black border-dashed pb-8">
+                <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing} className="border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={
+                    videos.length === 0 ||
+                    selectedConnections.length === 0 ||
+                    isProcessing ||
+                    selectedConnections.some(id => {
+                      const error = connectionDetails[id]?.error;
+                      const info = connectionDetails[id]?.data;
+                      const isSpam = error && SPAM_RISK_CODES.includes(error.code);
+                      const isTooLong = info && videoDuration && videoDuration > info.max_video_post_duration_sec;
+                      const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
+                      return isSpam || isTooLong || privacyNotSelected;
+                    })
+                  }
+                  className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {isUploading ? 'Uploading...' : 'Posting...'}
+                    </>
+                  ) : postType === 'direct' ? (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Post Now
+                    </>
+                  ) : (
+                    <>
+                      <CalendarIcon className="w-5 h-5" />
+                      Schedule Post
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={videos.length === 0 || selectedConnections.length === 0 || isProcessing}
-                className="gap-2"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {isUploading ? 'Uploading...' : 'Posting...'}
-                  </>
-                ) : postType === 'direct' ? (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Post Now
-                  </>
+            {/* Sidebar Preview Section */}
+            <div className="w-full lg:w-[400px] shrink-0 xl:sticky xl:top-6 space-y-4">
+              <div className="p-4 border-4 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex items-center gap-2 mb-4 border-b-4 border-black pb-2">
+                  <Play className="w-6 h-6 text-purple-600 fill-purple-200" />
+                  <h3 className="text-lg font-black uppercase leading-none">Content Preview</h3>
+                </div>
+
+                {previewVideo ? (
+                  <div className="space-y-4">
+                    <div className="relative aspect-[9/16] bg-black border-4 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <video
+                        key={previewVideo.name}
+                        src={previewUrl || ""}
+                        controls
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+
+                    <div className="p-4 border-4 border-black bg-yellow-100 italic font-bold text-sm leading-tight">
+                      <p>✨ Previewing: <span className="text-purple-600">{previewVideo.name}</span></p>
+                      <p className="mt-2 text-[10px] uppercase opacity-70">🎯 This is exactly how your audience will see it!</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border-2 border-black bg-gray-50 text-[10px] font-black uppercase text-center">
+                        {formatFileSize(previewVideo.size)}
+                      </div>
+                      <div className="p-2 border-2 border-black bg-gray-50 text-[10px] font-black uppercase text-center">
+                        {videoDuration ? `${Math.floor(videoDuration / 60)}:${Math.floor(videoDuration % 60).toString().padStart(2, '0')}` : '...'}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    <CalendarIcon className="w-4 h-4" />
-                    Schedule Post
-                  </>
+                  <div className="aspect-[9/16] border-4 border-black border-dashed bg-gray-50 flex flex-col items-center justify-center text-center p-8 gap-4 grayscale opacity-40">
+                    <VideoIcon className="w-16 h-16 text-gray-400" strokeWidth={1.5} />
+                    <p className="font-black text-sm uppercase">No video selected for preview</p>
+                    <p className="text-[10px] font-bold">Upload a video and click the preview button to see it here</p>
+                  </div>
                 )}
-              </Button>
+              </div>
+
+              {/* Character Count / Info Sidebar */}
+              <div className="p-4 border-4 border-black bg-blue-100 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <h4 className="font-black text-xs uppercase mb-2">Publishing Tips</h4>
+                <ul className="text-[10px] font-bold space-y-2 list-disc pl-4">
+                  <li>Optimal video length: 15-60 seconds</li>
+                  <li>Resolution: 1080x1920 (Vertical)</li>
+                  <li>Ensure you have selected at least one connection</li>
+                  <li>Double check your caption and privacy settings</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
@@ -531,5 +769,5 @@ const VideoPostPage = () => {
   )
 }
 
-export default VideoPostPage
+export default VideoPostPage;
 

@@ -7,7 +7,7 @@ import { auth } from "../../../../../auth"
 
 
 export async function POST(request: Request) {
-    const session = await auth(); 
+    const session = await auth();
     if (!session) {
         return new Response(JSON.stringify({
             message: "Unauthorized", data: [
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
         where: {
-            email: session?.user.email   
+            email: session?.user.email
         }
     })
 
@@ -81,6 +81,9 @@ export async function POST(request: Request) {
     const mediaType = body.media_type
     const mediaIds = body.media_ids
     const privacy = body.privacy ? body.privacy : 'PUBLIC_TO_EVERYONE'
+    const disableComment = body.disable_comment ?? false
+    const disableDuet = body.disable_duet ?? false
+    const disableStitch = body.disable_stitch ?? false
 
     const post_history_obj = []
 
@@ -166,7 +169,7 @@ export async function POST(request: Request) {
                             post_info: {
                                 title: title,
                                 description: caption,
-                                disable_comment: false,
+                                disable_comment: disableComment,
                                 privacy_level: privacy,
                                 auto_add_music: true
                             },
@@ -290,9 +293,9 @@ export async function POST(request: Request) {
                             post_info: {
                                 title: title,
                                 privacy_level: privacy,
-                                disable_duet: false,
-                                disable_comment: false,
-                                disable_stitch: false,
+                                disable_duet: disableDuet,
+                                disable_comment: disableComment,
+                                disable_stitch: disableStitch,
                                 video_cover_timestamp_ms: 1000
                             },
                             source_info: {

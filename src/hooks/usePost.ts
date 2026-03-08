@@ -8,7 +8,10 @@ export const usePost = () => {
         connections: string[],
         privacy: string,
         media_type: string,
-        media_ids: string[]
+        media_ids: string[],
+        disable_comment?: boolean,
+        disable_duet?: boolean,
+        disable_stitch?: boolean
     }) => {
         setIsPosting(true)
         try {
