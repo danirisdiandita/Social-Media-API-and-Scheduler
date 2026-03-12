@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2, ArrowLeft, Play } from 'lucide-react'
+import { Upload, X, Calendar as CalendarIcon, Clock, Send, Video as VideoIcon, ChevronDown, CheckCircle2, Loader2, ArrowLeft, Play, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -24,6 +24,7 @@ import { useUploadVideo } from '@/hooks/useUploadVideo'
 import { usePost } from '@/hooks/usePost'
 import { toast } from 'sonner'
 import { useCreatorInfo, SPAM_RISK_CODES } from '@/hooks/useCreatorInfo'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useEffect } from 'react'
 
 // Mock social media connections
@@ -531,7 +532,7 @@ const VideoPostPage = () => {
                           {conn?.socialMedia?.toLowerCase() === 'tiktok' && (
                             <div className="space-y-3 p-3 border-2 border-black bg-gray-50">
                               <Label className="text-[10px] font-black uppercase text-gray-500">Allow users to:</Label>
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-row flex-wrap gap-4">
                                 {[
                                   { id: 'comment', label: 'Comment', disabled: info.comment_disabled },
                                   { id: 'duet', label: 'Duet', disabled: info.duet_disabled },
@@ -556,7 +557,7 @@ const VideoPostPage = () => {
                                           }));
                                         }}
                                         disabled={item.disabled || isBlocked}
-                                        className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                        className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-[#00f2ea] transition-all cursor-pointer disabled:cursor-not-allowed"
                                       />
                                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
                                         <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
@@ -568,6 +569,130 @@ const VideoPostPage = () => {
                                     )}
                                   </label>
                                 ))}
+                              </div>
+
+                              {/* Disclose Video Content Toggle */}
+                              <div className="pt-3 border-t-2 border-black border-dashed mt-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-[10px] font-black uppercase text-gray-500">Disclose video content</Label>
+                                  <button
+                                    onClick={() => {
+                                      setInteractionSettings(prev => ({
+                                        ...prev,
+                                        [id]: {
+                                          ...(prev[id] || {}),
+                                          disclose_content: !(prev[id]?.disclose_content ?? false)
+                                        }
+                                      }));
+                                    }}
+                                    disabled={isBlocked}
+                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full border-2 border-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${interactionSettings[id]?.disclose_content ? 'bg-[#00f2ea]' : 'bg-gray-200'}`}
+                                  >
+                                    <span
+                                      className={`pointer-events-none block h-4 w-4 rounded-full bg-white border-2 border-black shadow-none ring-0 transition-transform ${interactionSettings[id]?.disclose_content ? 'translate-x-5' : 'translate-x-0'}`}
+                                    />
+                                  </button>
+                                </div>
+
+                                {interactionSettings[id]?.disclose_content && (
+                                  <div className="mt-3 space-y-4">
+                                    {/* Dynamic Prompt Alert */}
+                                    {(interactionSettings[id]?.brand_organic || interactionSettings[id]?.branded_content) && (
+                                      <div className="p-3 border-2 border-black bg-[#e7f0ff] flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                        <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0 mt-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                          <Info className="w-3.5 h-3.5 text-white" strokeWidth={4} />
+                                        </div>
+                                        <p className="text-[11px] font-black leading-tight text-blue-800 uppercase">
+                                          {interactionSettings[id]?.branded_content 
+                                            ? "Your photo/video will be labeled as 'Paid partnership'" 
+                                            : "Your photo/video will be labeled as 'Promotional content'"}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    <p className="text-[11px] font-medium leading-tight text-gray-600">
+                                      Turn on to disclose that this video promotes goods or services in exchange for something of value. Your video could promote yourself, a third party, or both.
+                                    </p>
+
+                                    {/* Disclose Options */}
+                                    <div className="space-y-4 pt-1">
+                                      {/* Your Brand */}
+                                      <div
+                                        className="flex items-start gap-3 cursor-pointer group"
+                                        onClick={() => {
+                                          setInteractionSettings(prev => ({
+                                            ...prev,
+                                            [id]: {
+                                              ...(prev[id] || {}),
+                                              brand_organic: !(prev[id]?.brand_organic ?? false)
+                                            }
+                                          }));
+                                        }}
+                                      >
+                                        <div className="relative mt-1">
+                                          <input
+                                            type="checkbox"
+                                            checked={interactionSettings[id]?.brand_organic ?? false}
+                                            onChange={() => { }}
+                                            className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-[#00f2ea] transition-all cursor-pointer"
+                                          />
+                                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <p className="text-[11px] font-black uppercase group-hover:text-purple-600 transition-colors">Your brand</p>
+                                          <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                            You are promoting yourself or your own business. This video will be classified as Brand Organic.
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {/* Branded Content */}
+                                      <div
+                                        className="flex items-start gap-3 cursor-pointer group"
+                                        onClick={() => {
+                                          setInteractionSettings(prev => ({
+                                            ...prev,
+                                            [id]: {
+                                              ...(prev[id] || {}),
+                                              branded_content: !(prev[id]?.branded_content ?? false)
+                                            }
+                                          }));
+                                        }}
+                                      >
+                                        <div className="relative mt-1">
+                                          <input
+                                            type="checkbox"
+                                            checked={interactionSettings[id]?.branded_content ?? false}
+                                            onChange={() => { }}
+                                            className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-[#00f2ea] transition-all cursor-pointer"
+                                          />
+                                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <p className="text-[11px] font-black uppercase group-hover:text-purple-600 transition-colors">Branded content</p>
+                                          <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                            You are promoting another brand or a third party. This video will be classified as Branded Content.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
+                                       <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
+                                          <Info className="w-3 h-3" />
+                                          <span>At least one option must be selected to proceed.</span>
+                                       </div>
+                                    )}
+
+                                    <p className="text-[11px] font-medium text-gray-500 pt-2">
+                                      By posting, you agree to our <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-[#00f2ea] font-bold hover:underline">Music Usage Confirmation</a>.
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
@@ -672,40 +797,55 @@ const VideoPostPage = () => {
                 <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing} className="border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={
-                    videos.length === 0 ||
-                    selectedConnections.length === 0 ||
-                    isProcessing ||
-                    selectedConnections.some(id => {
-                      const error = connectionDetails[id]?.error;
-                      const info = connectionDetails[id]?.data;
-                      const isSpam = error && SPAM_RISK_CODES.includes(error.code);
-                      const isTooLong = info && videoDuration && videoDuration > info.max_video_post_duration_sec;
-                      const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
-                      return isSpam || isTooLong || privacyNotSelected;
-                    })
-                  }
-                  className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {isUploading ? 'Uploading...' : 'Posting...'}
-                    </>
-                  ) : postType === 'direct' ? (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Post Now
-                    </>
-                  ) : (
-                    <>
-                      <CalendarIcon className="w-5 h-5" />
-                      Schedule Post
-                    </>
-                  )}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <div className="inline-block">
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={
+                            videos.length === 0 ||
+                            selectedConnections.length === 0 ||
+                            isProcessing ||
+                            selectedConnections.some(id => {
+                              const error = connectionDetails[id]?.error;
+                              const info = connectionDetails[id]?.data;
+                              const settings = interactionSettings[id];
+                              const isSpam = error && SPAM_RISK_CODES.includes(error.code);
+                              const isTooLong = info && videoDuration && videoDuration > info.max_video_post_duration_sec;
+                              const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
+                              const isDisclosureInvalid = settings?.disclose_content && !settings?.brand_organic && !settings?.branded_content;
+                              return isSpam || isTooLong || privacyNotSelected || isDisclosureInvalid;
+                            })
+                          }
+                          className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              {isUploading ? 'Uploading...' : 'Posting...'}
+                            </>
+                          ) : postType === 'direct' ? (
+                            <>
+                              <Send className="w-5 h-5" />
+                              Post Now
+                            </>
+                          ) : (
+                            <>
+                              <CalendarIcon className="w-5 h-5" />
+                              Schedule Post
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    {selectedConnections.some(id => interactionSettings[id]?.disclose_content && !interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content) && (
+                      <TooltipContent className="bg-yellow-100 border-4 border-black text-black font-bold max-w-xs p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="text-xs uppercase">You need to indicate if your content promotes yourself, a third party, or both.</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
