@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Calendar as CalendarIcon, Clock, Send, Image as ImageIcon, ChevronDown, ChevronLeft, ChevronRight, GripVertical, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react'
+import { Upload, X, Calendar as CalendarIcon, Clock, Send, Image as ImageIcon, ChevronDown, ChevronLeft, ChevronRight, GripVertical, CheckCircle2, Loader2, ArrowLeft, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -293,6 +293,10 @@ const PhotoPostPage = () => {
             media_type: 'PHOTO',
             media_ids: imageIds,
             disable_comment: interactionSettings[selectedConnections[0]]?.comment === false,
+            disable_duet: interactionSettings[selectedConnections[0]]?.duet === false,
+            disable_stitch: interactionSettings[selectedConnections[0]]?.stitch === false,
+            brand_content_toggle: interactionSettings[selectedConnections[0]]?.branded_content || false,
+            brand_organic_toggle: interactionSettings[selectedConnections[0]]?.brand_organic || false,
         }
         console.log("postPayload", JSON.stringify(postPayload, null, 2))
         try {
@@ -558,9 +562,11 @@ const PhotoPostPage = () => {
                                                         {conn?.socialMedia?.toLowerCase() === 'tiktok' && (
                                                             <div className="space-y-3 p-3 border-2 border-black bg-gray-50">
                                                                 <Label className="text-[10px] font-black uppercase text-gray-500">Allow users to:</Label>
-                                                                <div className="flex flex-col gap-2">
+                                                                <div className="flex flex-row flex-wrap gap-4">
                                                                     {[
-                                                                        { id: 'comment', label: 'Comment', disabled: info.comment_disabled }
+                                                                        { id: 'comment', label: 'Comment', disabled: info.comment_disabled },
+                                                                        { id: 'duet', label: 'Duet', disabled: info.duet_disabled },
+                                                                        { id: 'stitch', label: 'Stitch', disabled: info.stitch_disabled }
                                                                     ].map((item) => (
                                                                         <label
                                                                             key={item.id}
@@ -575,7 +581,7 @@ const PhotoPostPage = () => {
                                                                                         setInteractionSettings(prev => ({
                                                                                             ...prev,
                                                                                             [id]: {
-                                                                                                ...(prev[id] || { comment: !info.comment_disabled }),
+                                                                                                ...(prev[id] || { comment: !info.comment_disabled, duet: !info.duet_disabled, stitch: !info.stitch_disabled }),
                                                                                                 [item.id]: e.target.checked
                                                                                             }
                                                                                         }));
@@ -593,6 +599,130 @@ const PhotoPostPage = () => {
                                                                             )}
                                                                         </label>
                                                                     ))}
+                                                                </div>
+
+                                                                {/* Disclose Photo Content Toggle */}
+                                                                <div className="pt-3 border-t-2 border-black border-dashed mt-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <Label className="text-[10px] font-black uppercase text-gray-500">Disclose photo content</Label>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setInteractionSettings(prev => ({
+                                                                                    ...prev,
+                                                                                    [id]: {
+                                                                                        ...(prev[id] || {}),
+                                                                                        disclose_content: !(prev[id]?.disclose_content ?? false)
+                                                                                    }
+                                                                                }));
+                                                                            }}
+                                                                            disabled={isBlocked}
+                                                                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full border-2 border-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${interactionSettings[id]?.disclose_content ? 'bg-yellow-300' : 'bg-gray-200'}`}
+                                                                        >
+                                                                            <span
+                                                                                className={`pointer-events-none block h-4 w-4 rounded-full bg-white border-2 border-black shadow-none ring-0 transition-transform ${interactionSettings[id]?.disclose_content ? 'translate-x-5' : 'translate-x-0'}`}
+                                                                            />
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {interactionSettings[id]?.disclose_content && (
+                                                                        <div className="mt-3 space-y-4">
+                                                                            {/* Dynamic Prompt Alert */}
+                                                                            {(interactionSettings[id]?.brand_organic || interactionSettings[id]?.branded_content) && (
+                                                                                <div className="p-3 border-2 border-black bg-blue-50 flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                                                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0 mt-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                                                                        <Info className="w-3.5 h-3.5 text-white" strokeWidth={4} />
+                                                                                    </div>
+                                                                                    <p className="text-[11px] font-black leading-tight text-blue-800 uppercase">
+                                                                                        {interactionSettings[id]?.branded_content
+                                                                                            ? "Your photo/video will be labeled as 'Paid partnership'"
+                                                                                            : "Your photo/video will be labeled as 'Promotional content'"}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+
+                                                                            <p className="text-[11px] font-medium leading-tight text-gray-600">
+                                                                                Turn on to disclose that this photo promotes goods or services in exchange for something of value. Your photo could promote yourself, a third party, or both.
+                                                                            </p>
+
+                                                                            {/* Disclose Options */}
+                                                                            <div className="space-y-4 pt-1">
+                                                                                {/* Your Brand */}
+                                                                                <div
+                                                                                    className="flex items-start gap-3 cursor-pointer group"
+                                                                                    onClick={() => {
+                                                                                        setInteractionSettings(prev => ({
+                                                                                            ...prev,
+                                                                                            [id]: {
+                                                                                                ...(prev[id] || {}),
+                                                                                                brand_organic: !(prev[id]?.brand_organic ?? false)
+                                                                                            }
+                                                                                        }));
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="relative mt-1">
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={interactionSettings[id]?.brand_organic ?? false}
+                                                                                            onChange={() => { }}
+                                                                                            className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all cursor-pointer"
+                                                                                        />
+                                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                                                                            <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-[11px] font-black uppercase group-hover:text-blue-600 transition-colors">Your brand</p>
+                                                                                        <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                                                                            You are promoting yourself or your own business. This photo will be classified as Brand Organic.
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Branded Content */}
+                                                                                <div
+                                                                                    className="flex items-start gap-3 cursor-pointer group"
+                                                                                    onClick={() => {
+                                                                                        setInteractionSettings(prev => ({
+                                                                                            ...prev,
+                                                                                            [id]: {
+                                                                                                ...(prev[id] || {}),
+                                                                                                branded_content: !(prev[id]?.branded_content ?? false)
+                                                                                            }
+                                                                                        }));
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="relative mt-1">
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={interactionSettings[id]?.branded_content ?? false}
+                                                                                            onChange={() => { }}
+                                                                                            className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all cursor-pointer"
+                                                                                        />
+                                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                                                                            <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-[11px] font-black uppercase group-hover:text-blue-600 transition-colors">Branded content</p>
+                                                                                        <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                                                                            You are promoting another brand or a third party. This photo will be classified as Branded Content.
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
+                                                                                <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
+                                                                                    <Info className="w-3 h-3" />
+                                                                                    <span>At least one option must be selected to proceed.</span>
+                                                                                </div>
+                                                                            )}
+
+                                                                            <p className="text-[11px] font-medium text-gray-500 pt-2">
+                                                                                By posting, you agree to our <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}

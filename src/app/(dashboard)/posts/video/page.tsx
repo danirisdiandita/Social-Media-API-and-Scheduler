@@ -234,6 +234,8 @@ const VideoPostPage = () => {
       disable_comment: interactionSettings[selectedConnections[0]]?.comment === false,
       disable_duet: interactionSettings[selectedConnections[0]]?.duet === false,
       disable_stitch: interactionSettings[selectedConnections[0]]?.stitch === false,
+      brand_content_toggle: interactionSettings[selectedConnections[0]]?.branded_content || false,
+      brand_organic_toggle: interactionSettings[selectedConnections[0]]?.brand_organic || false,
     }
     console.log("postPayload", JSON.stringify(postPayload, null, 2))
     try {
@@ -603,8 +605,8 @@ const VideoPostPage = () => {
                                           <Info className="w-3.5 h-3.5 text-white" strokeWidth={4} />
                                         </div>
                                         <p className="text-[11px] font-black leading-tight text-blue-800 uppercase">
-                                          {interactionSettings[id]?.branded_content 
-                                            ? "Your photo/video will be labeled as 'Paid partnership'" 
+                                          {interactionSettings[id]?.branded_content
+                                            ? "Your photo/video will be labeled as 'Paid partnership'"
                                             : "Your photo/video will be labeled as 'Promotional content'"}
                                         </p>
                                       </div>
@@ -682,10 +684,10 @@ const VideoPostPage = () => {
                                     </div>
 
                                     {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
-                                       <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
-                                          <Info className="w-3 h-3" />
-                                          <span>At least one option must be selected to proceed.</span>
-                                       </div>
+                                      <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
+                                        <Info className="w-3 h-3" />
+                                        <span>At least one option must be selected to proceed.</span>
+                                      </div>
                                     )}
 
                                     <p className="text-[11px] font-medium text-gray-500 pt-2">

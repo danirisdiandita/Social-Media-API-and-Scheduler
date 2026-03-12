@@ -84,6 +84,8 @@ export async function POST(request: Request) {
     const disableComment = body.disable_comment ?? false
     const disableDuet = body.disable_duet ?? false
     const disableStitch = body.disable_stitch ?? false
+    const brandOrganicToggle = body.brand_organic_toggle ?? false
+    const brandContentToggle = body.brand_content_toggle ?? false
 
     const post_history_obj = []
 
@@ -296,7 +298,9 @@ export async function POST(request: Request) {
                                 disable_duet: disableDuet,
                                 disable_comment: disableComment,
                                 disable_stitch: disableStitch,
-                                video_cover_timestamp_ms: 1000
+                                video_cover_timestamp_ms: 1000,
+                                brand_content_toggle: brandContentToggle,
+                                brand_organic_toggle: brandOrganicToggle,
                             },
                             source_info: {
                                 source: "PULL_FROM_URL",
@@ -306,6 +310,7 @@ export async function POST(request: Request) {
                     });
                     const data_ = await response.json();
                     dataOutput.push(data_)
+
 
                     if (data_.data.publish_id) {
                         post_history_obj.push({

@@ -11,7 +11,9 @@ export const usePost = () => {
         media_ids: string[],
         disable_comment?: boolean,
         disable_duet?: boolean,
-        disable_stitch?: boolean
+        disable_stitch?: boolean,
+        brand_content_toggle?: boolean,
+        brand_organic_toggle?: boolean,
     }) => {
         setIsPosting(true)
         try {
