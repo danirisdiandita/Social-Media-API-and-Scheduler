@@ -567,7 +567,7 @@ const PhotoPostPage = () => {
                                                                         { id: 'comment', label: 'Comment', disabled: info.comment_disabled },
                                                                         { id: 'duet', label: 'Duet', disabled: info.duet_disabled },
                                                                         { id: 'stitch', label: 'Stitch', disabled: info.stitch_disabled }
-                                                                    ].map((item) => (
+                                                                    ].filter(item => !item.disabled).map((item) => (
                                                                         <label
                                                                             key={item.id}
                                                                             className={`flex items-center gap-2 cursor-pointer ${item.disabled ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
@@ -575,13 +575,13 @@ const PhotoPostPage = () => {
                                                                             <div className="relative">
                                                                                 <input
                                                                                     type="checkbox"
-                                                                                    checked={interactionSettings[id]?.[item.id] ?? !item.disabled}
+                                                                                    checked={interactionSettings[id]?.[item.id] ?? (item.id === 'comment' ? !item.disabled : false)}
                                                                                     onChange={(e) => {
                                                                                         if (item.disabled) return;
                                                                                         setInteractionSettings(prev => ({
                                                                                             ...prev,
                                                                                             [id]: {
-                                                                                                ...(prev[id] || { comment: !info.comment_disabled, duet: !info.duet_disabled, stitch: !info.stitch_disabled }),
+                                                                                                ...(prev[id] || { comment: !info.comment_disabled, duet: !info.duet_disabled && false, stitch: !info.stitch_disabled && false }),
                                                                                                 [item.id]: e.target.checked
                                                                                             }
                                                                                         }));
