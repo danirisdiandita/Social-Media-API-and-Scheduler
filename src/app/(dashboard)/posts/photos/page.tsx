@@ -102,7 +102,8 @@ const PhotoPostPage = () => {
     const { data } = useConnection(1, 999)
     const { uploadFiles, isUploading } = useUploadFile()
     const { doPosting, isPosting } = usePost()
-    const { getCreatorInfo, creatorInfo } = useCreatorInfo()
+    const { getCreatorInfo, creatorInfo, isLoading: isLoadingInfo } = useCreatorInfo()
+    const [loadingConnectionId, setLoadingConnectionId] = useState<string | null>(null)
     const [connectionDetails, setConnectionDetails] = useState<Record<string, any>>({})
     const [privacySelections, setPrivacySelections] = useState<Record<string, string>>({})
     const [previewPhoto, setPreviewPhoto] = useState<File | null>(null)
@@ -125,7 +126,7 @@ const PhotoPostPage = () => {
         }
     }, [creatorInfo])
 
-    const isProcessing = isUploading || isPosting
+    const isProcessing = isUploading || isPosting || isLoadingInfo
 
     // Map social media to icons
     const socialMediaIcons: Record<string, string> = {
@@ -191,6 +192,7 @@ const PhotoPostPage = () => {
         const isSelecting = !selectedConnections.includes(id)
 
         if (isSelecting) {
+            setLoadingConnectionId(id)
             setSelectedConnections(prev => [...prev, id])
             try {
                 const info = await getCreatorInfo({ connectionId: id })
@@ -199,6 +201,8 @@ const PhotoPostPage = () => {
                 }
             } catch (err) {
                 console.error(`Failed to fetch info for connection ${id}:`, err)
+            } finally {
+                setLoadingConnectionId(null)
             }
         } else {
             setSelectedConnections(prev => prev.filter((c: string) => c !== id))
@@ -457,13 +461,18 @@ const PhotoPostPage = () => {
                                                     <button
                                                         key={connection.id}
                                                         onClick={() => toggleConnection(connection.id)}
-                                                        disabled={isProcessing}
-                                                        className={`p-4 border-4 border-black text-center transition-all ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
+                                                        disabled={isProcessing || loadingConnectionId === connection.id}
+                                                        className={`p-4 border-4 border-black text-center transition-all relative ${isProcessing ? 'cursor-not-allowed opacity-50' : ''
                                                             } ${selectedConnections.includes(connection.id)
                                                                 ? 'bg-blue-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
                                                                 : 'bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]'
                                                             }`}
                                                     >
+                                                        {loadingConnectionId === connection.id && (
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-blue-300/50 z-10">
+                                                                <Loader2 className="w-8 h-8 animate-spin text-black" />
+                                                            </div>
+                                                        )}
                                                         {connection.avatarUrl ? (
                                                             <img
                                                                 src={connection.avatarUrl}
@@ -633,9 +642,11 @@ const PhotoPostPage = () => {
                                                                                         <Info className="w-3.5 h-3.5 text-white" strokeWidth={4} />
                                                                                     </div>
                                                                                     <p className="text-[11px] font-black leading-tight text-blue-800 uppercase">
-                                                                                        {interactionSettings[id]?.branded_content
+                                                                                        {interactionSettings[id]?.brand_organic && interactionSettings[id]?.branded_content
                                                                                             ? "Your photo/video will be labeled as 'Paid partnership'"
-                                                                                            : "Your photo/video will be labeled as 'Promotional content'"}
+                                                                                            : interactionSettings[id]?.branded_content
+                                                                                                ? "Your photo/video will be labeled as 'Paid partnership'"
+                                                                                                : "Your photo/video will be labeled as 'Promotional content'"}
                                                                                     </p>
                                                                                 </div>
                                                                             )}
