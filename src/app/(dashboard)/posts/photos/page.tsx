@@ -556,11 +556,33 @@ const PhotoPostPage = () => {
                                                                     <SelectValue placeholder="CHOOSE PRIVACY..." />
                                                                 </SelectTrigger>
                                                                 <SelectContent className="border-4 border-black">
-                                                                    {info.privacy_level_options?.map((option: string) => (
-                                                                        <SelectItem key={option} value={option} className="font-bold">
-                                                                            {option.replace(/_/g, ' ')}
-                                                                        </SelectItem>
-                                                                    ))}
+                                                                    {info.privacy_level_options?.map((option: string) => {
+                                                                        const isSelfPrivate = option.toUpperCase() === 'SELF' || option.toUpperCase() === 'PRIVATE' || option.toUpperCase() === 'ONLY_ME';
+                                                                        const isBrandedChecked = interactionSettings[id]?.branded_content;
+                                                                        const isPrivacyDisabled = isSelfPrivate && isBrandedChecked;
+
+                                                                        return (
+                                                                            <SelectItem key={option} value={option} className="font-bold" disabled={isPrivacyDisabled}>
+                                                                                {isPrivacyDisabled ? (
+                                                                                    <TooltipProvider delayDuration={0}>
+                                                                                        <Tooltip>
+                                                                                            <TooltipTrigger asChild>
+                                                                                                <div className="w-full flex items-center justify-between pointer-events-auto">
+                                                                                                    <span>{option.replace(/_/g, ' ')}</span>
+                                                                                                    <Info className="w-4 h-4 ml-2 text-gray-400" />
+                                                                                                </div>
+                                                                                            </TooltipTrigger>
+                                                                                            <TooltipContent side="right" className="bg-yellow-100 border-4 border-black text-black font-bold p-3 max-w-xs z-[100] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                                                                <p className="text-xs uppercase">Branded content visibility cannot be set to private.</p>
+                                                                                            </TooltipContent>
+                                                                                        </Tooltip>
+                                                                                    </TooltipProvider>
+                                                                                ) : (
+                                                                                    option.replace(/_/g, ' ')
+                                                                                )}
+                                                                            </SelectItem>
+                                                                        );
+                                                                    })}
                                                                 </SelectContent>
                                                             </Select>
                                                             {!privacySelections[id] && !isBlocked && (
@@ -691,36 +713,49 @@ const PhotoPostPage = () => {
                                                                                 </div>
 
                                                                                 {/* Branded Content */}
-                                                                                <div
-                                                                                    className="flex items-start gap-3 cursor-pointer group"
-                                                                                    onClick={() => {
-                                                                                        setInteractionSettings(prev => ({
-                                                                                            ...prev,
-                                                                                            [id]: {
-                                                                                                ...(prev[id] || {}),
-                                                                                                branded_content: !(prev[id]?.branded_content ?? false)
-                                                                                            }
-                                                                                        }));
-                                                                                    }}
-                                                                                >
-                                                                                    <div className="relative mt-1">
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={interactionSettings[id]?.branded_content ?? false}
-                                                                                            onChange={() => { }}
-                                                                                            className="peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all cursor-pointer"
-                                                                                        />
-                                                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
-                                                                                            <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-[11px] font-black uppercase group-hover:text-blue-600 transition-colors">Branded content</p>
-                                                                                        <p className="text-[10px] font-medium text-gray-500 leading-tight">
-                                                                                            You are promoting another brand or a third party. This photo will be classified as Branded Content.
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
+                                                                                <TooltipProvider delayDuration={0}>
+                                                                                    <Tooltip>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div
+                                                                                                className={`flex items-start gap-3 ${(privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer group'}`}
+                                                                                                onClick={() => {
+                                                                                                    if (privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME') return;
+                                                                                                    setInteractionSettings(prev => ({
+                                                                                                        ...prev,
+                                                                                                        [id]: {
+                                                                                                            ...(prev[id] || {}),
+                                                                                                            branded_content: !(prev[id]?.branded_content ?? false)
+                                                                                                        }
+                                                                                                    }));
+                                                                                                }}
+                                                                                            >
+                                                                                                <div className="relative mt-1">
+                                                                                                    <input
+                                                                                                        type="checkbox"
+                                                                                                        checked={interactionSettings[id]?.branded_content ?? false}
+                                                                                                        onChange={() => { }}
+                                                                                                        disabled={privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME'}
+                                                                                                        className={`peer appearance-none w-5 h-5 border-2 border-black bg-white checked:bg-yellow-300 transition-all ${(privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME') ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                                                                    />
+                                                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100">
+                                                                                                        <CheckCircle2 className="w-3.5 h-3.5 text-black" strokeWidth={4} />
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <p className={`text-[11px] font-black uppercase ${!(privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME') && 'group-hover:text-blue-600'} transition-colors`}>Branded content</p>
+                                                                                                    <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                                                                                        You are promoting another brand or a third party. This photo will be classified as Branded Content.
+                                                                                                    </p>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        {(privacySelections[id]?.toUpperCase() === 'SELF' || privacySelections[id]?.toUpperCase() === 'PRIVATE' || privacySelections[id]?.toUpperCase() === 'ONLY_ME') && (
+                                                                                            <TooltipContent className="bg-yellow-100 border-4 border-black text-black font-bold p-3 max-w-xs z-[100] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                                                                <p className="text-xs uppercase">Visibility for branded content can't be private.</p>
+                                                                                            </TooltipContent>
+                                                                                        )}
+                                                                                    </Tooltip>
+                                                                                </TooltipProvider>
                                                                             </div>
 
                                                                             {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
@@ -731,7 +766,11 @@ const PhotoPostPage = () => {
                                                                             )}
 
                                                                             <p className="text-[11px] font-medium text-gray-500 pt-2">
-                                                                                By posting, you agree to our <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.
+                                                                                {interactionSettings[id]?.branded_content ? (
+                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.</>
+                                                                                ) : (
+                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.</>
+                                                                                )}
                                                                             </p>
                                                                         </div>
                                                                     )}
@@ -824,7 +863,11 @@ const PhotoPostPage = () => {
 
                                 {/* Submit Button */}
                                 <p className="text-[10px] font-bold text-gray-500 mb-2 text-right uppercase italic">
-                                    By posting, you agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a>
+                                    {selectedConnections.some(id => interactionSettings[id]?.disclose_content && interactionSettings[id]?.branded_content) ? (
+                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a></>
+                                    ) : (
+                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a></>
+                                    )}
                                 </p>
                                 <div className="flex justify-end gap-3 pt-4 border-t-4 border-black border-dashed pb-8">
                                     <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing} className="border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
@@ -960,6 +1003,24 @@ const PhotoPostPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Publishing Modal */}
+            {(isUploading || isPosting) && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-auto">
+                    <div className="bg-yellow-300 border-[4px] border-black p-8 max-w-md w-[90%] flex flex-col items-center text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-200">
+                        <Loader2 className="w-16 h-16 animate-spin mb-6 text-black" strokeWidth={3} />
+                        <h2 className="text-2xl font-black uppercase mb-4 text-black text-center break-words w-full">Publishing Post...</h2>
+                        <div className="bg-white border-2 border-black p-4 text-left w-full uppercase">
+                            <p className="text-xs font-bold leading-tight mb-2">
+                                ⚠️ <span className="text-red-600">Do not close this window or navigate away.</span>
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-700 leading-tight">
+                                After finishing publishing, it may take a few minutes for the content to process and be visible on your profile.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DndProvider >
     )
 }
