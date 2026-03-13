@@ -697,7 +697,7 @@ const VideoPostPage = () => {
                                     {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
                                       <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
                                         <Info className="w-3 h-3" />
-                                        <span>At least one option must be selected to proceed.</span>
+                                        <span>At least one option must be selected to proceed. You need to indicate if your content promotes yourself, a third party, or both.</span>
                                       </div>
                                     )}
 

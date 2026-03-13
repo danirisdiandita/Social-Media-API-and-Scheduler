@@ -26,6 +26,7 @@ import { Config } from '@/constants/config'
 import { usePost } from '@/hooks/usePost'
 import { toast } from 'sonner'
 import { useCreatorInfo, SPAM_RISK_CODES } from '@/hooks/useCreatorInfo'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useEffect } from 'react'
 
 interface DraggableImageProps {
@@ -725,7 +726,7 @@ const PhotoPostPage = () => {
                                                                             {!interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content && (
                                                                                 <div className="p-2 border-2 border-black bg-yellow-100 text-[9px] font-black uppercase text-yellow-800 leading-tight flex items-center gap-2">
                                                                                     <Info className="w-3 h-3" />
-                                                                                    <span>At least one option must be selected to proceed.</span>
+                                                                                    <span>At least one option must be selected to proceed. You need to indicate if your content promotes yourself, a third party, or both.</span>
                                                                                 </div>
                                                                             )}
 
@@ -829,39 +830,54 @@ const PhotoPostPage = () => {
                                     <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing} className="border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                         Cancel
                                     </Button>
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={
-                                            images.length === 0 ||
-                                            selectedConnections.length === 0 ||
-                                            isProcessing ||
-                                            selectedConnections.some(id => {
-                                                const error = connectionDetails[id]?.error;
-                                                const info = connectionDetails[id]?.data;
-                                                const isSpam = error && SPAM_RISK_CODES.includes(error.code);
-                                                const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
-                                                return isSpam || privacyNotSelected;
-                                            })
-                                        }
-                                        className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
-                                    >
-                                        {isProcessing ? (
-                                            <>
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                {isUploading ? 'Uploading...' : 'Posting...'}
-                                            </>
-                                        ) : postType === 'direct' ? (
-                                            <>
-                                                <Send className="w-5 h-5" />
-                                                Post Now
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CalendarIcon className="w-5 h-5" />
-                                                Schedule Post
-                                            </>
-                                        )}
-                                    </Button>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <div className="inline-block">
+                                                    <Button
+                                                        onClick={handleSubmit}
+                                                        disabled={
+                                                            images.length === 0 ||
+                                                            selectedConnections.length === 0 ||
+                                                            isProcessing ||
+                                                            selectedConnections.some(id => {
+                                                                const error = connectionDetails[id]?.error;
+                                                                const info = connectionDetails[id]?.data;
+                                                                const settings = interactionSettings[id];
+                                                                const isSpam = error && SPAM_RISK_CODES.includes(error.code);
+                                                                const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
+                                                                const isDisclosureInvalid = settings?.disclose_content && !settings?.brand_organic && !settings?.branded_content;
+                                                                return isSpam || privacyNotSelected || isDisclosureInvalid;
+                                                            })
+                                                        }
+                                                        className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
+                                                    >
+                                                        {isProcessing ? (
+                                                            <>
+                                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                                {isUploading ? 'Uploading...' : 'Posting...'}
+                                                            </>
+                                                        ) : postType === 'direct' ? (
+                                                            <>
+                                                                <Send className="w-5 h-5" />
+                                                                Post Now
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <CalendarIcon className="w-5 h-5" />
+                                                                Schedule Post
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {selectedConnections.some(id => interactionSettings[id]?.disclose_content && !interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content) && (
+                                                <TooltipContent className="bg-yellow-100 border-4 border-black text-black font-bold max-w-xs p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                    <p className="text-xs uppercase">You need to indicate if your content promotes yourself, a third party, or both.</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                             </div>
 
