@@ -728,12 +728,14 @@ const PhotoPostPage = () => {
                                                                         <div className="mt-3 space-y-4">
                                                                             {/* Dynamic Prompt Alert */}
                                                                             {(interactionSettings[id]?.brand_organic || interactionSettings[id]?.branded_content) && (
-                                                                                <div className="p-3 border-2 border-black bg-blue-50 flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
-                                                                                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0 mt-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                                                                <div className={`p-3 border-2 border-black flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-300 ${privacySelections[id] && ['SELF_ONLY', 'PRIVATE', 'ONLY_ME'].includes(privacySelections[id].toUpperCase()) && interactionSettings[id]?.branded_content ? 'bg-red-100' : 'bg-blue-50'}`}>
+                                                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${privacySelections[id] && ['SELF_ONLY', 'PRIVATE', 'ONLY_ME'].includes(privacySelections[id].toUpperCase()) && interactionSettings[id]?.branded_content ? 'bg-red-500' : 'bg-blue-500'}`}>
                                                                                         <Info className="w-3.5 h-3.5 text-white" strokeWidth={4} />
                                                                                     </div>
-                                                                                    <p className="text-[11px] font-black leading-tight text-blue-800 uppercase">
-                                                                                        {interactionSettings[id]?.brand_organic && interactionSettings[id]?.branded_content
+                                                                                    <p className={`text-[11px] font-black leading-tight uppercase ${privacySelections[id] && ['SELF_ONLY', 'PRIVATE', 'ONLY_ME'].includes(privacySelections[id].toUpperCase()) && interactionSettings[id]?.branded_content ? 'text-red-800' : 'text-blue-800'}`}>
+                                                                                        {privacySelections[id] && ['SELF_ONLY', 'PRIVATE', 'ONLY_ME'].includes(privacySelections[id].toUpperCase()) && interactionSettings[id]?.branded_content
+                                                                                            ? "Branded content visibility cannot be set to private."
+                                                                                            : interactionSettings[id]?.brand_organic && interactionSettings[id]?.branded_content
                                                                                             ? "Your photo/video will be labeled as 'Paid partnership'"
                                                                                             : interactionSettings[id]?.branded_content
                                                                                                 ? "Your photo/video will be labeled as 'Paid partnership'"
@@ -835,9 +837,9 @@ const PhotoPostPage = () => {
 
                                                                             <p className="text-[11px] font-medium text-gray-500 pt-2">
                                                                                 {interactionSettings[id]?.branded_content ? (
-                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.</>
+                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Music Usage Confirmation</a>.</>
                                                                                 ) : (
-                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">Music Usage Confirmation</a>.</>
+                                                                                    <>By posting, you agree to TikTok's <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Music Usage Confirmation</a>.</>
                                                                                 )}
                                                                             </p>
                                                                         </div>
@@ -931,11 +933,13 @@ const PhotoPostPage = () => {
 
                                 {/* Submit Button */}
                                 <p className="text-[10px] font-bold text-gray-500 mb-2 text-right uppercase italic">
-                                    {selectedConnections.some(id => interactionSettings[id]?.disclose_content && interactionSettings[id]?.branded_content) ? (
-                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a></>
-                                    ) : (
-                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Music Usage Confirmation</a></>
-                                    )}
+                                    <div className="mt-2 text-xs font-bold bg-[#A6FAFF] border-2 border-black p-3">
+                                        {selectedConnections.some(id => interactionSettings[id]?.disclose_content && interactionSettings[id]?.branded_content) ? (
+                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Music Usage Confirmation</a></>
+                                        ) : (
+                                        <>By posting, you expressly consent to send your content to TikTok and agree to TikTok&apos;s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener noreferrer" className="text-blue-700 font-black underline hover:text-blue-900">Music Usage Confirmation</a></>
+                                        )}
+                                    </div>
                                 </p>
                                 <div className="flex justify-end gap-3 pt-4 border-t-4 border-black border-dashed pb-8">
                                     <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing} className="border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
@@ -958,7 +962,9 @@ const PhotoPostPage = () => {
                                                                 const isSpam = error && SPAM_RISK_CODES.includes(error.code);
                                                                 const privacyNotSelected = info?.privacy_level_options && !privacySelections[id];
                                                                 const isDisclosureInvalid = settings?.disclose_content && !settings?.brand_organic && !settings?.branded_content;
-                                                                return isSpam || privacyNotSelected || isDisclosureInvalid;
+                                                                const isSelfPrivate = privacySelections[id] && (privacySelections[id].toUpperCase() === 'SELF' || privacySelections[id].toUpperCase() === 'PRIVATE' || privacySelections[id].toUpperCase() === 'ONLY_ME');
+                                                                const isBrandedAndPrivate = settings?.branded_content && isSelfPrivate;
+                                                                return isSpam || privacyNotSelected || isDisclosureInvalid || isBrandedAndPrivate;
                                                             })
                                                         }
                                                         className="gap-2 border-4 border-black font-black uppercase bg-green-400 hover:bg-green-500 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] h-12 px-8"
@@ -985,6 +991,14 @@ const PhotoPostPage = () => {
                                             {selectedConnections.some(id => interactionSettings[id]?.disclose_content && !interactionSettings[id]?.brand_organic && !interactionSettings[id]?.branded_content) && (
                                                 <TooltipContent className="bg-yellow-100 border-4 border-black text-black font-bold max-w-xs p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                                                     <p className="text-xs uppercase">You need to indicate if your content promotes yourself, a third party, or both.</p>
+                                                </TooltipContent>
+                                            )}
+                                            {selectedConnections.some(id => {
+                                                const isSelfPrivate = privacySelections[id] && (privacySelections[id].toUpperCase() === 'SELF' || privacySelections[id].toUpperCase() === 'PRIVATE' || privacySelections[id].toUpperCase() === 'ONLY_ME');
+                                                return interactionSettings[id]?.branded_content && isSelfPrivate;
+                                            }) && (
+                                                <TooltipContent className="bg-yellow-100 border-4 border-black text-red-600 font-bold max-w-xs p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                    <p className="text-xs uppercase">Branded content visibility cannot be set to private.</p>
                                                 </TooltipContent>
                                             )}
                                         </Tooltip>
