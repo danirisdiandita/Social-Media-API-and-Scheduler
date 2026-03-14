@@ -8,7 +8,12 @@ export const usePost = () => {
         connections: string[],
         privacy: string,
         media_type: string,
-        media_ids: string[]
+        media_ids: string[],
+        disable_comment?: boolean,
+        disable_duet?: boolean,
+        disable_stitch?: boolean,
+        brand_content_toggle?: boolean,
+        brand_organic_toggle?: boolean,
     }) => {
         setIsPosting(true)
         try {
@@ -20,7 +25,8 @@ export const usePost = () => {
                 body: JSON.stringify(postData),
             })
             if (!response.ok) {
-                throw new Error('Failed to create post')
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || errData.message || 'Failed to create post')
             }
             const data = await response.json()
             return data

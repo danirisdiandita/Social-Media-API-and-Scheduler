@@ -18,6 +18,7 @@ export type PostHistory = {
   caption?: string;
   media_type?: string;
   privacy?: string;
+  status?: string;
   created_at: string;
   updated_at: string;
   connection: {
@@ -149,13 +150,21 @@ export default function PostHistoryPage() {
                         </Badge>
                       )}
                       {post.privacy && (
-                        <Badge variant="outline" className="gap-1">
+                        <Badge variant="outline" className="gap-1 flex items-center">
                           {post.privacy === "public" ? (
                             <Globe className="w-3 h-3" />
                           ) : (
                             <Lock className="w-3 h-3" />
                           )}
                           {post.privacy}
+                        </Badge>
+                      )}
+                      {post.status && (
+                        <Badge 
+                          variant={post.status === "PUBLISH_COMPLETE" ? "success" : post.status === "FAILED" ? "destructive" : "outline"} 
+                          className="gap-1 flex items-center border-2 border-black font-bold uppercase"
+                        >
+                          {post.status}
                         </Badge>
                       )}
                     </div>

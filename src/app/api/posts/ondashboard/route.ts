@@ -7,7 +7,7 @@ import { auth } from "../../../../../auth"
 
 
 export async function POST(request: Request) {
-    const session = await auth(); 
+    const session = await auth();
     if (!session) {
         return new Response(JSON.stringify({
             message: "Unauthorized", data: [
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
         where: {
-            email: session?.user.email   
+            email: session?.user.email
         }
     })
 
@@ -81,6 +81,11 @@ export async function POST(request: Request) {
     const mediaType = body.media_type
     const mediaIds = body.media_ids
     const privacy = body.privacy ? body.privacy : 'PUBLIC_TO_EVERYONE'
+    const disableComment = body.disable_comment ?? false
+    const disableDuet = body.disable_duet ?? false
+    const disableStitch = body.disable_stitch ?? false
+    const brandOrganicToggle = body.brand_organic_toggle ?? false
+    const brandContentToggle = body.brand_content_toggle ?? false
 
     const post_history_obj = []
 
@@ -166,7 +171,7 @@ export async function POST(request: Request) {
                             post_info: {
                                 title: title,
                                 description: caption,
-                                disable_comment: false,
+                                disable_comment: disableComment,
                                 privacy_level: privacy,
                                 auto_add_music: true
                             },
@@ -184,7 +189,7 @@ export async function POST(request: Request) {
 
                     dataOutput.push(data_)
 
-                    if (data_.data.publish_id) {
+                    if (data_?.data?.publish_id) {
                         post_history_obj.push({
                             user_id: user.id,
                             connection_id: connection.id,
@@ -196,6 +201,10 @@ export async function POST(request: Request) {
                             media_type: mediaType,
                             privacy: privacy
                         })
+                    } else {
+                        return NextResponse.json({ 
+                            error: data_?.error?.message || 'Failed to generate publish_id, please try again.' 
+                        }, { status: 400 });
                     }
                     // post the image urls with title and captions to tiktok 
 
@@ -222,13 +231,15 @@ export async function POST(request: Request) {
             }
         }
 
+        let postHistoryIds: number[] = []
         if (post_history_obj.length > 0) {
-            await prisma.postHistory.createMany({
-                data: post_history_obj
-            })
+            const results = await prisma.$transaction(
+                post_history_obj.map(obj => prisma.postHistory.create({ data: obj }))
+            )
+            postHistoryIds = results.map(r => r.id)
         }
 
-        return NextResponse.json({ message: "Post created successfully", data: dataOutput }, { status: 200 });
+        return NextResponse.json({ message: "Post created successfully", data: dataOutput, postHistoryIds }, { status: 200 });
     } else {
         // this is video 
 
@@ -290,10 +301,12 @@ export async function POST(request: Request) {
                             post_info: {
                                 title: title,
                                 privacy_level: privacy,
-                                disable_duet: false,
-                                disable_comment: false,
-                                disable_stitch: false,
-                                video_cover_timestamp_ms: 1000
+                                disable_duet: disableDuet,
+                                disable_comment: disableComment,
+                                disable_stitch: disableStitch,
+                                video_cover_timestamp_ms: 1000,
+                                brand_content_toggle: brandContentToggle,
+                                brand_organic_toggle: brandOrganicToggle,
                             },
                             source_info: {
                                 source: "PULL_FROM_URL",
@@ -304,7 +317,8 @@ export async function POST(request: Request) {
                     const data_ = await response.json();
                     dataOutput.push(data_)
 
-                    if (data_.data.publish_id) {
+
+                    if (data_?.data?.publish_id) {
                         post_history_obj.push({
                             user_id: user.id,
                             connection_id: connection.id,
@@ -316,6 +330,10 @@ export async function POST(request: Request) {
                             media_type: mediaType,
                             privacy: privacy
                         })
+                    } else {
+                        return NextResponse.json({ 
+                            error: data_?.error?.message || 'Failed to generate publish_id, please try again.' 
+                        }, { status: 400 });
                     }
                     break;
                 }
@@ -340,10 +358,12 @@ export async function POST(request: Request) {
             }
         }
 
+        let postHistoryIds: number[] = []
         if (post_history_obj.length > 0) {
-            await prisma.postHistory.createMany({
-                data: post_history_obj
-            })
+            const results = await prisma.$transaction(
+                post_history_obj.map(obj => prisma.postHistory.create({ data: obj }))
+            )
+            postHistoryIds = results.map(r => r.id)
         } else {
             return NextResponse.json({
                 error: "No post created", data: [{
@@ -355,6 +375,6 @@ export async function POST(request: Request) {
             }, { status: 404 });
         }
 
-        return NextResponse.json({ message: "Video Post successfully created", data: dataOutput }, { status: 200 });
+        return NextResponse.json({ message: "Video Post successfully created", data: dataOutput, postHistoryIds }, { status: 200 });
     }
 }
