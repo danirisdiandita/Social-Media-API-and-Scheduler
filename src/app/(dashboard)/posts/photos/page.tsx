@@ -100,6 +100,7 @@ const PhotoPostPage = () => {
     const [scheduleTime, setScheduleTime] = useState('10:30:00')
     const [openDatePicker, setOpenDatePicker] = useState(false)
     const [postSuccess, setPostSuccess] = useState(false)
+    const [isPolling, setIsPolling] = useState(false)
     const { data } = useConnection(1, 999)
     const { uploadFiles, isUploading } = useUploadFile()
     const { doPosting, isPosting } = usePost()
@@ -127,7 +128,7 @@ const PhotoPostPage = () => {
         }
     }, [creatorInfo])
 
-    const isProcessing = isUploading || isPosting || isLoadingInfo
+    const isProcessing = isUploading || isPosting || isPolling || isLoadingInfo
 
     // Map social media to icons
     const socialMediaIcons: Record<string, string> = {
@@ -306,7 +307,71 @@ const PhotoPostPage = () => {
         console.log("postPayload", JSON.stringify(postPayload, null, 2))
         try {
             const postResponse = await doPosting(postPayload)
-            if (postResponse) {
+            if (postResponse && postResponse.postHistoryIds && postResponse.postHistoryIds.length > 0) {
+                setIsPolling(true)
+                let allCompleted = false;
+                let attempt = 0;
+                let delay = 3000;
+                let hasFailed = false;
+
+                while (!allCompleted && !hasFailed && attempt < 15) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    attempt++;
+                    
+                    let currentStatusCompleted = true;
+
+                    for (const id of postResponse.postHistoryIds) {
+                        try {
+                            const statusRes = await fetch('/api/posts/status', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ post_history_id: id })
+                            });
+
+                            if (statusRes.ok) {
+                                const statusData = await statusRes.json();
+                                const state = statusData?.data?.data?.status;
+
+                                if (state === 'FAILED') {
+                                    hasFailed = true;
+                                    toast.error(`Post failed: ${statusData?.data?.data?.fail_reason || 'Unknown error'}`, {
+                                        duration: 5000,
+                                        position: "top-center",
+                                    });
+                                    break;
+                                }
+
+                                if (state !== 'PUBLISH_COMPLETE') {
+                                    currentStatusCompleted = false;
+                                }
+                            } else {
+                                currentStatusCompleted = false;
+                            }
+                        } catch (e) {
+                            currentStatusCompleted = false;
+                        }
+                    }
+
+                    if (hasFailed) break;
+
+                    if (currentStatusCompleted) {
+                        allCompleted = true;
+                        break;
+                    }
+
+                    delay = Math.min(delay * 1.5, 30000); // max 30 seconds wait
+                }
+
+                setIsPolling(false)
+
+                if (!hasFailed) {
+                    setPostSuccess(true)
+                    toast.success('Photos posted successfully!', {
+                        duration: 5000,
+                        position: "top-center",
+                    })
+                }
+            } else if (postResponse) {
                 setPostSuccess(true)
                 toast.success('Photos posted successfully!', {
                     duration: 5000,
@@ -314,6 +379,7 @@ const PhotoPostPage = () => {
                 })
             }
         } catch (error) {
+            setIsPolling(false)
             if (error instanceof Error) {
                 console.error(error.message)
                 toast.error(`Error posting photos: ${error.message}`, {
@@ -326,6 +392,8 @@ const PhotoPostPage = () => {
 
     const resetForm = () => {
         setImages([])
+        setPreviewUrl(null)
+        setPreviewPhoto(null)
         setTitle('')
         setCaption('')
         setSelectedConnections([])
@@ -1005,17 +1073,21 @@ const PhotoPostPage = () => {
             </div>
 
             {/* Publishing Modal */}
-            {(isUploading || isPosting) && (
+            {(isUploading || isPosting || isPolling) && (
                 <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-auto">
                     <div className="bg-yellow-300 border-[4px] border-black p-8 max-w-md w-[90%] flex flex-col items-center text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-200">
                         <Loader2 className="w-16 h-16 animate-spin mb-6 text-black" strokeWidth={3} />
-                        <h2 className="text-2xl font-black uppercase mb-4 text-black text-center break-words w-full">Publishing Post...</h2>
+                        <h2 className="text-2xl font-black uppercase mb-4 text-black text-center break-words w-full">
+                            {isPolling ? 'Checking Status...' : 'Publishing Post...'}
+                        </h2>
                         <div className="bg-white border-2 border-black p-4 text-left w-full uppercase">
                             <p className="text-xs font-bold leading-tight mb-2">
                                 ⚠️ <span className="text-red-600">Do not close this window or navigate away.</span>
                             </p>
                             <p className="text-[10px] font-bold text-gray-700 leading-tight">
-                                After finishing publishing, it may take a few minutes for the content to process and be visible on your profile.
+                                {isPolling 
+                                    ? "We are verifying with TikTok that your post is properly processed. Please hang tight!" 
+                                    : "After finishing publishing, it may take a few minutes for the content to process and be visible on your profile."}
                             </p>
                         </div>
                     </div>

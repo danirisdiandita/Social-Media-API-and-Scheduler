@@ -189,7 +189,7 @@ export async function POST(request: Request) {
 
                     dataOutput.push(data_)
 
-                    if (data_.data.publish_id) {
+                    if (data_?.data?.publish_id) {
                         post_history_obj.push({
                             user_id: user.id,
                             connection_id: connection.id,
@@ -201,6 +201,10 @@ export async function POST(request: Request) {
                             media_type: mediaType,
                             privacy: privacy
                         })
+                    } else {
+                        return NextResponse.json({ 
+                            error: data_?.error?.message || 'Failed to generate publish_id, please try again.' 
+                        }, { status: 400 });
                     }
                     // post the image urls with title and captions to tiktok 
 
@@ -227,13 +231,15 @@ export async function POST(request: Request) {
             }
         }
 
+        let postHistoryIds: number[] = []
         if (post_history_obj.length > 0) {
-            await prisma.postHistory.createMany({
-                data: post_history_obj
-            })
+            const results = await prisma.$transaction(
+                post_history_obj.map(obj => prisma.postHistory.create({ data: obj }))
+            )
+            postHistoryIds = results.map(r => r.id)
         }
 
-        return NextResponse.json({ message: "Post created successfully", data: dataOutput }, { status: 200 });
+        return NextResponse.json({ message: "Post created successfully", data: dataOutput, postHistoryIds }, { status: 200 });
     } else {
         // this is video 
 
@@ -312,7 +318,7 @@ export async function POST(request: Request) {
                     dataOutput.push(data_)
 
 
-                    if (data_.data.publish_id) {
+                    if (data_?.data?.publish_id) {
                         post_history_obj.push({
                             user_id: user.id,
                             connection_id: connection.id,
@@ -324,6 +330,10 @@ export async function POST(request: Request) {
                             media_type: mediaType,
                             privacy: privacy
                         })
+                    } else {
+                        return NextResponse.json({ 
+                            error: data_?.error?.message || 'Failed to generate publish_id, please try again.' 
+                        }, { status: 400 });
                     }
                     break;
                 }
@@ -348,10 +358,12 @@ export async function POST(request: Request) {
             }
         }
 
+        let postHistoryIds: number[] = []
         if (post_history_obj.length > 0) {
-            await prisma.postHistory.createMany({
-                data: post_history_obj
-            })
+            const results = await prisma.$transaction(
+                post_history_obj.map(obj => prisma.postHistory.create({ data: obj }))
+            )
+            postHistoryIds = results.map(r => r.id)
         } else {
             return NextResponse.json({
                 error: "No post created", data: [{
@@ -363,6 +375,6 @@ export async function POST(request: Request) {
             }, { status: 404 });
         }
 
-        return NextResponse.json({ message: "Video Post successfully created", data: dataOutput }, { status: 200 });
+        return NextResponse.json({ message: "Video Post successfully created", data: dataOutput, postHistoryIds }, { status: 200 });
     }
 }
