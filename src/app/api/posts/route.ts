@@ -110,6 +110,7 @@ export async function POST(request: Request) {
     const mediaType = body.media_type
     const mediaIds = body.media_ids
     const privacy = body.privacy ? body.privacy : 'PUBLIC_TO_EVERYONE'
+    const postMode = body.post_mode || 'DIRECT_POST'
 
     const post_history_obj = []
 
@@ -185,28 +186,44 @@ export async function POST(request: Request) {
                         return `${Config.NEXT_PUBLIC_URL}/api/file/${mediaId}`
                     }))
 
-                    const response = await fetch('https://open.tiktokapis.com/v2/post/publish/content/init/', {
+                    const isDraft = postMode === 'UPLOAD_AS_DRAFT'
+                    const photoEndpoint = isDraft
+                        ? 'https://open.tiktokapis.com/v2/post/publish/inbox/content/init/'
+                        : 'https://open.tiktokapis.com/v2/post/publish/content/init/'
+
+                    const photoBody: Record<string, unknown> = {
+                        source_info: {
+                            source: "PULL_FROM_URL",
+                            photo_images: imageUrls
+                        }
+                    }
+
+                    if (isDraft) {
+                        (photoBody.source_info as Record<string, unknown>).photo_cover_index = 1
+                    } else {
+                        photoBody.post_info = {
+                            title: title,
+                            description: caption,
+                            disable_comment: false,
+                            privacy_level: privacy,
+                            auto_add_music: true
+                        }
+                        photoBody.source_info = {
+                            source: "PULL_FROM_URL",
+                            photo_cover_index: 1,
+                            photo_images: imageUrls
+                        }
+                        photoBody.post_mode = postMode
+                        photoBody.media_type = "PHOTO"
+                    }
+
+                    const response = await fetch(photoEndpoint, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${access_token_}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            post_info: {
-                                title: title,
-                                description: caption,
-                                disable_comment: false,
-                                privacy_level: privacy,
-                                auto_add_music: true
-                            },
-                            source_info: {
-                                source: "PULL_FROM_URL",
-                                photo_cover_index: 1,
-                                photo_images: imageUrls
-                            },
-                            post_mode: "DIRECT_POST",
-                            media_type: "PHOTO"
-                        })
+                        body: JSON.stringify(photoBody)
                     });
 
                     const data_ = await response.json();
@@ -307,27 +324,75 @@ export async function POST(request: Request) {
                             }
                         })
                     }
-                    const videoUrl = `${Config.NEXT_PUBLIC_URL}/api/file/${mediaIds[0]}`
-                    const response = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${decrypt(JSON.parse(connection.access_token!))}`,
-                            'Content-Type': 'application/json; charset=UTF-8'
-                        },
-                        body: JSON.stringify({
-                            post_info: {
-                                title: title,
-                                privacy_level: privacy,
-                                disable_duet: false,
-                                disable_comment: false,
-                                disable_stitch: false,
-                                video_cover_timestamp_ms: 1000
+
+                    let access_token_ = decrypt(JSON.parse(connection.access_token!))
+                    let expires_in_ = connection.expires_in
+                    let refresh_expires_in_ = connection.refresh_expires_in
+                    let refresh_token_ = decrypt(JSON.parse(connection.refresh_token!))
+                    let updated_at_ = connection.updated_at
+                    // check if the access token expired, if expired, refresh it
+                    const expired_date = new Date(new Date(connection.updated_at).getTime() + connection.expires_in * 1000);
+                    if (expired_date < new Date()) {
+                        const {
+                            access_token,
+                            expires_in,
+                            refresh_expires_in,
+                            refresh_token,
+                            updated_at
+                        } = await refreshTiktokToken(refresh_token_)
+                        access_token_ = access_token
+                        expires_in_ = expires_in
+                        refresh_expires_in_ = refresh_expires_in
+                        refresh_token_ = refresh_token
+                        updated_at_ = updated_at
+
+                        await prisma.connection.update({
+                            where: {
+                                id: connection.id
                             },
-                            source_info: {
-                                source: "PULL_FROM_URL",
-                                video_url: videoUrl
+                            data: {
+                                access_token: JSON.stringify(encrypt(access_token_)),
+                                expires_in: expires_in_,
+                                refresh_expires_in: refresh_expires_in_,
+                                refresh_token: JSON.stringify(encrypt(refresh_token_)),
+                                updated_at: updated_at_
                             }
                         })
+                    }
+
+                    const videoUrl = `${Config.NEXT_PUBLIC_URL}/api/file/${mediaIds[0]}`
+
+                    const isDraft = postMode === 'UPLOAD_AS_DRAFT'
+                    const videoEndpoint = isDraft
+                        ? 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/'
+                        : 'https://open.tiktokapis.com/v2/post/publish/video/init/'
+
+                    const videoBody: Record<string, unknown> = {
+                        source_info: {
+                            source: "PULL_FROM_URL",
+                            video_url: videoUrl
+                        }
+                    }
+
+                    if (!isDraft) {
+                        videoBody.post_info = {
+                            title: title,
+                            privacy_level: privacy,
+                            disable_duet: false,
+                            disable_comment: false,
+                            disable_stitch: false,
+                            video_cover_timestamp_ms: 1000
+                        }
+                        videoBody.post_mode = postMode
+                    }
+
+                    const response = await fetch(videoEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${access_token_}`,
+                            'Content-Type': 'application/json; charset=UTF-8'
+                        },
+                        body: JSON.stringify(videoBody)
                     });
                     const data_ = await response.json();
                     dataOutput.push(data_)
