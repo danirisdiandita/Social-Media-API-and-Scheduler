@@ -1,0 +1,95 @@
+
+<style>
+.err-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.err-table th { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-align: left; padding: 8px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.err-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: top; }
+.err-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 99px; }
+.b-ok { background: var(--color-background-success); color: var(--color-text-success); }
+.b-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.b-err { background: var(--color-background-danger); color: var(--color-text-danger); }
+.b-info { background: var(--color-background-info); color: var(--color-text-info); }
+.code { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+.msg { font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; font-size: 14px; }
+.sub { font-size: 13px; color: var(--color-text-secondary); }
+</style>
+
+<h2 class="sr-only">TikTok API error codes with human-readable frontend messages</h2>
+
+<div style="padding: 1rem 0;">
+  <table class="err-table">
+    <thead>
+      <tr>
+        <th style="width: 80px;">Status</th>
+        <th style="width: 140px;">Error code</th>
+        <th>User-facing message</th>
+        <th style="width: 90px;">Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="code">200</span></td>
+        <td><span class="code">spam_risk_too_many_posts</span></td>
+        <td>
+          <div class="msg">You've reached today's posting limit</div>
+          <div class="sub">You can post again tomorrow. Check back in 24 hours.</div>
+        </td>
+        <td><span class="badge b-warn">Warning</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">200</span></td>
+        <td><span class="code">spam_risk_user_banned_from_posting</span></td>
+        <td>
+          <div class="msg">Your account can't post right now</div>
+          <div class="sub">TikTok has restricted posting on your account. Contact TikTok support for help.</div>
+        </td>
+        <td><span class="badge b-err">Error</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">200</span></td>
+        <td><span class="code">reached_active_user_cap</span></td>
+        <td>
+          <div class="msg">Service is busy — try again later</div>
+          <div class="sub">We've hit our daily publishing limit. Please try posting again in a few hours.</div>
+        </td>
+        <td><span class="badge b-warn">Warning</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">401</span></td>
+        <td><span class="code">access_token_invalid</span></td>
+        <td>
+          <div class="msg">Your TikTok session has expired</div>
+          <div class="sub">Please reconnect your TikTok account to continue posting.</div>
+        </td>
+        <td><span class="badge b-err">Error</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">401</span></td>
+        <td><span class="code">scope_not_authorized</span></td>
+        <td>
+          <div class="msg">Posting permission not granted</div>
+          <div class="sub">Please reconnect your TikTok account and allow posting access when prompted.</div>
+        </td>
+        <td><span class="badge b-err">Error</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">429</span></td>
+        <td><span class="code">rate_limit_exceeded</span></td>
+        <td>
+          <div class="msg">Too many requests — slow down</div>
+          <div class="sub">You're sending requests too quickly. Wait a moment and try again.</div>
+        </td>
+        <td><span class="badge b-warn">Warning</span></td>
+      </tr>
+      <tr>
+        <td><span class="code">5xx</span></td>
+        <td><span class="code">—</span></td>
+        <td>
+          <div class="msg">TikTok is having issues right now</div>
+          <div class="sub">This is on TikTok's end, not yours. Please try again in a few minutes.</div>
+        </td>
+        <td><span class="badge b-info">Retry</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
