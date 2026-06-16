@@ -11,34 +11,53 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 
-export default function LoginForm() {
+export default function RegisterForm() {
     const session = useSession()
+    const [firstName, setFirstName] = useState("")
+    const [lastName, setLastName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
 
     if (session.status === "authenticated") {
         redirect("/dashboard")
     }
 
-    const handleGoogleSignIn = () => {
-        signIn("google", { redirectTo: "/dashboard" })
-    }
-
-    const handleCredentialsSignIn = async (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
+        setLoading(true)
 
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        })
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, firstName, lastName }),
+            })
 
-        if (result?.error) {
-            setError("Invalid email or password")
-        } else {
-            redirect("/dashboard")
+            const data = await res.json()
+
+            if (!res.ok) {
+                setError(data.error || "Registration failed")
+                return
+            }
+
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            })
+
+            if (result?.error) {
+                setError("Account created but sign in failed. Please try logging in.")
+            } else {
+                redirect("/dashboard")
+            }
+        } catch {
+            setError("Something went wrong")
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -51,16 +70,42 @@ export default function LoginForm() {
                         <Image src="/autoposting.svg" alt="Logo" width={50} height={50} />
                         <h1 className="text-3xl font-black">AutoPosting.my.id</h1>
                     </div>
-                    <h2 className="text-4xl font-black text-black">Welcome Back!</h2>
+                    <h2 className="text-4xl font-black text-black">Create Account</h2>
                     <p className="text-lg font-medium text-black">
-                        Sign in to continue
+                        Sign up to get started
                     </p>
                 </div>
 
                 {/* Content */}
                 <div className="p-8 space-y-6">
-                    {/* Credentials Form */}
-                    <form onSubmit={handleCredentialsSignIn} className="space-y-4">
+                    <form onSubmit={handleRegister} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName">First Name</Label>
+                                <Input
+                                    id="firstName"
+                                    type="text"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                    placeholder="John"
+                                    required
+                                    className="border-2 border-black rounded-none h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Last Name</Label>
+                                <Input
+                                    id="lastName"
+                                    type="text"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                    placeholder="Doe"
+                                    required
+                                    className="border-2 border-black rounded-none h-12"
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input
@@ -73,6 +118,7 @@ export default function LoginForm() {
                                 className="border-2 border-black rounded-none h-12"
                             />
                         </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
                             <Input
@@ -80,8 +126,9 @@ export default function LoginForm() {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
+                                placeholder="Min. 6 characters"
                                 required
+                                minLength={6}
                                 className="border-2 border-black rounded-none h-12"
                             />
                         </div>
@@ -92,11 +139,12 @@ export default function LoginForm() {
 
                         <Button
                             type="submit"
-                            className="cursor-pointer w-full h-14 bg-[#FFE66D] hover:bg-[#FFD700] text-black font-bold text-base border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all"
+                            disabled={loading}
+                            className="cursor-pointer w-full h-14 bg-[#FFE66D] hover:bg-[#FFD700] text-black font-bold text-base border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             size="lg"
                             rounded="none"
                         >
-                            Sign In with Email
+                            {loading ? "Creating account..." : "Create Account"}
                         </Button>
                     </form>
 
@@ -109,7 +157,7 @@ export default function LoginForm() {
 
                     {/* Google Button */}
                     <Button
-                        onClick={handleGoogleSignIn}
+                        onClick={() => signIn("google", { redirectTo: "/dashboard" })}
                         className="cursor-pointer w-full h-14 bg-white hover:bg-gray-50 text-black font-bold text-base border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all"
                         size="lg"
                         rounded="none"
@@ -143,21 +191,11 @@ export default function LoginForm() {
 
                 {/* Footer */}
                 <div className="p-8 pt-0 space-y-4">
-                    <p className="text-xs text-center font-medium text-black">
-                        Don&apos;t have an account?{" "}
-                        <Link href="/register" className="font-black underline hover:text-[#00E1EF] transition-colors">
-                            Sign up
-                        </Link>
-                    </p>
                     <div className="w-full h-1 bg-black" />
-                    <p className="text-xs text-center font-medium text-black leading-relaxed">
-                        By continuing, you agree to our{" "}
-                        <Link href="/tos" className="font-black underline hover:text-[#00E1EF] transition-colors">
-                            Terms of Service
-                        </Link>{" "}
-                        and{" "}
-                        <Link href="/privacy" className="font-black underline hover:text-[#00E1EF] transition-colors">
-                            Privacy Policy
+                    <p className="text-xs text-center font-medium text-black">
+                        Already have an account?{" "}
+                        <Link href="/login" className="font-black underline hover:text-[#00E1EF] transition-colors">
+                            Sign in
                         </Link>
                     </p>
                 </div>

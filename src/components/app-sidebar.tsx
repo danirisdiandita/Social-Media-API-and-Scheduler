@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Rocket, FileText, Link2, Key, BookOpen, LogOut, Image as ImageIcon, Video as VideoIcon } from "lucide-react"
+import { Rocket, FileText, Link2, Key, BookOpen, LogOut, Image as ImageIcon, Video as VideoIcon, Settings } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { signOut } from "next-auth/react"
@@ -42,6 +42,11 @@ const menuItems = [
     title: "API Keys",
     url: "/api-keys",
     icon: Key,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
   },
   {
     title: "Documentation",
