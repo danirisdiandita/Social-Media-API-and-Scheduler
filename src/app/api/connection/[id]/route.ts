@@ -1,5 +1,5 @@
 import { decrypt, encrypt } from '@/lib/encryption';
-import { auth } from '../../../../../auth';
+import { getUserFromRequest } from '@/lib/api-key';
 import { prisma } from '@/lib/prisma';
 import { refreshTiktokToken, revokeTiktokAccess } from '@/lib/tiktok-tool';
 import { NextRequest } from 'next/server';
@@ -8,19 +8,10 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth()
-    if (!session?.user?.email) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const user = await prisma.user.findFirst({
-        where: {
-            email: session?.user?.email
-        }
-    })
+    const user = await getUserFromRequest(request)
 
     if (!user) {
-        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     const { id } = await params

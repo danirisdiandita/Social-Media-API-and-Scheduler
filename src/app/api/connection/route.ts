@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "../../../../auth";
+import { getUserFromRequest } from "@/lib/api-key";
 
 export async function GET(request: Request) {
-    const session = await auth()
-    if (!session?.user?.email) {
+    const user = await getUserFromRequest(request)
+
+    if (!user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401,
             headers: {
@@ -12,20 +13,6 @@ export async function GET(request: Request) {
         })
     }
 
-    const user = await prisma.user.findFirst({
-        where: {
-            email: session?.user?.email
-        }
-    })
-
-    if (!user?.id) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
-            status: 404,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-    }
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get('page') || 1)
     const limit = Number(searchParams.get('limit') || 10)
@@ -34,14 +21,14 @@ export async function GET(request: Request) {
     const [connections, totalCount] = await Promise.all([
         prisma.connection.findMany({
             where: {
-                user_id: user?.id
+                user_id: user.id
             },
             skip,
             take: limit
         }),
         prisma.connection.count({
             where: {
-                user_id: user?.id
+                user_id: user.id
             }
         })
     ])
@@ -59,6 +46,5 @@ export async function GET(request: Request) {
         }
     })
 }
-
 
 
