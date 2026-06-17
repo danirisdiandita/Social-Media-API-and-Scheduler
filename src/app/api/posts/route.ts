@@ -2,97 +2,13 @@ import { Config } from "@/constants/config";
 import { decrypt, encrypt } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { refreshTiktokToken } from "@/lib/tiktok-tool";
+import { verifyApiKey } from "@/lib/api-key";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const apiKey = request.headers.get("Authorization")?.split("Bearer ")[1];
-  // const body = await request.json()
-
-  // 64
-  const keyIndex = apiKey?.slice(12, 12 + 64);
-
-  // 128
-  const key = apiKey?.slice(12 + 64, 12 + 64 + 128) || "";
-
-  const apiKeyFromDatabase = await prisma.apiKey.findFirst({
-    where: {
-      key_index: keyIndex,
-    },
-  });
+  const apiKeyFromDatabase = await verifyApiKey(request)
 
   if (!apiKeyFromDatabase) {
-    return new Response(
-      JSON.stringify({
-        message: "Invalid API key",
-        data: [
-          {
-            error: {
-              code: "401",
-              message: "Invalid API key",
-            },
-          },
-        ],
-      }),
-      {
-        status: 403,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  let decryptedKey = "";
-
-  try {
-    decryptedKey = decrypt(JSON.parse(apiKeyFromDatabase.key));
-  } catch {
-    return new Response(
-      JSON.stringify({
-        message: "Invalid API key",
-        data: [
-          {
-            error: {
-              code: "401",
-              message: "Invalid API key",
-            },
-          },
-        ],
-      }),
-      {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  // decryptedKey cannot be empty string or undefined
-  if (decryptedKey === "" || decryptedKey === undefined) {
-    return new Response(
-      JSON.stringify({
-        message: "Invalid API key",
-        data: [
-          {
-            error: {
-              code: "401",
-              message: "Invalid API key",
-            },
-          },
-        ],
-      }),
-      {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  // decryptedKey needs to be the same with the key
-  if (decryptedKey !== key) {
     return new Response(
       JSON.stringify({
         message: "Invalid API key",
