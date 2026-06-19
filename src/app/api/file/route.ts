@@ -103,10 +103,11 @@ export async function POST(request: NextRequest) {
             const buffer = Buffer.from(bytes);
 
             const fileType = file.type;
+            const originalExt = file.name.split('.').pop();
             // Use original filename if parameter is set, otherwise generate UUID-based name
             const fileName = useOriginalFilename 
                 ? file.name 
-                : `${crypto.randomUUID()}.${fileType.split('/')[1]}`;
+                : `${crypto.randomUUID()}.${originalExt}`;
             
             const command = new PutObjectCommand({
                 Bucket: Config.S3_BUCKET_NAME as string,
