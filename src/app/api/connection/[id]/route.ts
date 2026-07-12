@@ -4,6 +4,52 @@ import { prisma } from '@/lib/prisma';
 import { refreshTiktokToken, revokeTiktokAccess } from '@/lib/tiktok-tool';
 import { NextRequest } from 'next/server';
 
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const user = await getUserFromRequest(request)
+
+    if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const { id } = await params
+    const connectionId = parseInt(id)
+
+    if (isNaN(connectionId)) {
+        return new Response(JSON.stringify({ error: 'Invalid connection ID' }), { status: 400 });
+    }
+
+    const body = await request.json()
+    const { is_default_draft } = body
+
+    if (typeof is_default_draft !== 'boolean') {
+        return new Response(JSON.stringify({ error: 'is_default_draft must be a boolean' }), { status: 400 });
+    }
+
+    const connection = await prisma.connection.findFirst({
+        where: {
+            id: connectionId,
+            user_id: user.id
+        }
+    })
+
+    if (!connection) {
+        return new Response(JSON.stringify({ error: 'Connection not found' }), { status: 404 });
+    }
+
+    await prisma.connection.update({
+        where: { id: connectionId },
+        data: { is_default_draft },
+    })
+
+    return new Response(JSON.stringify({ success: true, is_default_draft }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

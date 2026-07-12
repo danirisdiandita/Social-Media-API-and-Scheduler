@@ -59,6 +59,7 @@ model Connection {
   open_id            String?       @unique
   union_id           String?
   avatar_url         String?
+  is_default_draft   Boolean       @default(false)
   PostHistory        PostHistory[]
 
   @@index([user_id])
