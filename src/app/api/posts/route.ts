@@ -331,6 +331,7 @@ export async function POST(request: Request) {
           if (!isDraft) {
             videoBody.post_info = {
               title: title,
+              description: caption,
               privacy_level: privacy,
               disable_duet: false,
               disable_comment: false,

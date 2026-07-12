@@ -25,6 +25,7 @@ export type Connection = {
   avatar_url?: string;
   connection_slug?: string;
   username?: string;
+  is_default_draft?: boolean;
 };
 
 const socialMedia2Logo = {
@@ -37,7 +38,7 @@ const socialMedia2Logo = {
 };
 
 export default function ConnectionsPage() {
-  const { data, error, isLoading, handlePageChange, nextPage, prevPage, isDisabledNext, isDisabledPrev, handleDeleteConnectionById } = useConnection();
+  const { data, error, isLoading, handlePageChange, nextPage, prevPage, isDisabledNext, isDisabledPrev, handleDeleteConnectionById, mutate } = useConnection();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [connectionToDelete, setConnectionToDelete] = useState<{ id: number; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -67,6 +68,17 @@ export default function ConnectionsPage() {
     const handle = username.startsWith("@") ? username : `@${username}`;
     copyToClipboard(handle);
     window.open(`https://tiktok.com/${handle}`, "_blank");
+  };
+
+  const handleToggleDraft = async (id: number, current: boolean) => {
+    const res = await fetch(`/api/connection/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_default_draft: !current }),
+    });
+    if (res.ok) {
+      mutate();
+    }
   };
 
   return (
@@ -183,6 +195,20 @@ export default function ConnectionsPage() {
                           {format(new Date(connection.updated_at || ""), "MMM d, yyyy")}
                         </div>
                       </div>
+                    </div>
+
+                    <div className="pt-3 border-t-2 border-black">
+                      <button
+                        onClick={() => handleToggleDraft(connection.id, !!connection.is_default_draft)}
+                        className="cursor-pointer flex items-center gap-2 group"
+                      >
+                        <div className={`w-10 h-5 border-2 border-black transition-colors flex items-center ${connection.is_default_draft ? 'bg-[#B4F8C8]' : 'bg-gray-200'}`}>
+                          <div className={`w-3.5 h-3.5 border-2 border-black bg-white transition-transform ${connection.is_default_draft ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
+                        </div>
+                        <span className="text-xs font-bold uppercase">
+                          {connection.is_default_draft ? "Default Draft" : "Default Draft"}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 </div>
