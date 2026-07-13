@@ -6,7 +6,7 @@ import { verifyApiKey } from "@/lib/api-key";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const apiKeyFromDatabase = await verifyApiKey(request)
+  const apiKeyFromDatabase = await verifyApiKey(request);
 
   if (!apiKeyFromDatabase) {
     return new Response(
@@ -363,7 +363,7 @@ export async function POST(request: Request) {
           }
           dataOutput.push(data_);
 
-          if (data_.data.publish_id) {
+          if (data_?.data?.publish_id) {
             post_history_obj.push({
               user_id: apiKeyFromDatabase.user_id,
               connection_id: connection.id,
