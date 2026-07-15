@@ -164,6 +164,7 @@ export async function POST(request: Request) {
           }
 
           console.log("photoBody", JSON.stringify(photoBody, null, 2));
+          console.log("photoEndpoint", photoEndpoint);
 
           const response = await fetch(photoEndpoint, {
             method: "POST",
@@ -174,7 +175,18 @@ export async function POST(request: Request) {
             body: JSON.stringify(photoBody),
           });
 
-          const data_ = await response.json();
+          const responseStatus = response.status;
+          const responseText = await response.text();
+          console.log("photoResponse status", responseStatus);
+          console.log("photoResponse body", responseText);
+
+          let data_;
+          try {
+            data_ = JSON.parse(responseText);
+          } catch {
+            dataOutput.push({ error: { code: String(responseStatus), message: responseText.slice(0, 500) } });
+            break;
+          }
 
           dataOutput.push(data_);
           if (data_?.data?.publish_id) {
