@@ -140,6 +140,9 @@ export async function POST(request: Request) {
             (
               photoBody.source_info as Record<string, unknown>
             ).photo_cover_index = 1;
+
+            photoBody.post_mode = 'MEDIA_UPLOAD'
+            photoBody.media_type = 'PHOTO'
           } else {
             photoBody.post_info = {
               title: title,
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
               photo_cover_index: 1,
               photo_images: imageUrls,
             };
-            photoBody.post_mode = postMode;
+            // photoBody.post_mode = postMode;
             photoBody.media_type = "PHOTO";
           }
 
@@ -338,7 +341,7 @@ export async function POST(request: Request) {
               disable_stitch: false,
               video_cover_timestamp_ms: 1000,
             };
-            videoBody.post_mode = postMode;
+            // videoBody.post_mode = postMode;
           }
 
           const response = await fetch(videoEndpoint, {
