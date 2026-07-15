@@ -140,8 +140,12 @@ export async function POST(request: Request) {
             (
               photoBody.source_info as Record<string, unknown>
             ).photo_cover_index = 1;
-            photoBody.post_mode = 'MEDIA_UPLOAD'
-            photoBody.media_type = 'PHOTO'
+            photoBody.post_mode = "MEDIA_UPLOAD";
+            photoBody.media_type = "PHOTO";
+            photoBody.post_info = {
+              title: "",
+              description: caption,
+            };
           } else {
             photoBody.post_info = {
               title: title,
