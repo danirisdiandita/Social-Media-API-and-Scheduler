@@ -137,10 +137,11 @@ export async function POST(request: Request) {
           };
 
           if (isDraft) {
-            (
-              photoBody.source_info as Record<string, unknown>
-            ).photo_cover_index = 1;
+            // (
+            //   photoBody.source_info as Record<string, unknown>
+            // ).photo_cover_index = 1;
 
+            photoBody.photo_cover_index = 1;
             photoBody.post_mode = 'MEDIA_UPLOAD'
             photoBody.media_type = 'PHOTO'
           } else {
@@ -159,6 +160,8 @@ export async function POST(request: Request) {
             // photoBody.post_mode = postMode;
             photoBody.media_type = "PHOTO";
           }
+
+          console.log("photoBody", photoBody);
 
           const response = await fetch(photoEndpoint, {
             method: "POST",
