@@ -159,7 +159,7 @@ export async function POST(request: Request) {
             photoBody.media_type = "PHOTO";
           }
 
-          console.log("photoBody", photoBody);
+          console.log("photoBody", JSON.stringify(photoBody, null, 2));
 
           const response = await fetch(photoEndpoint, {
             method: "POST",
