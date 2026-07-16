@@ -125,9 +125,12 @@ export async function POST(request: Request) {
           );
 
           const isDraft = postMode === "UPLOAD_AS_DRAFT";
-          const photoEndpoint = isDraft
-            ? "https://open.tiktokapis.com/v2/post/publish/inbox/content/init/"
-            : "https://open.tiktokapis.com/v2/post/publish/content/init/";
+          // const photoEndpoint = isDraft
+          //   ? "https://open.tiktokapis.com/v2/post/publish/inbox/content/init/"
+          //   : "https://open.tiktokapis.com/v2/post/publish/content/init/";
+          //
+          const photoEndpoint =
+            "https://open.tiktokapis.com/v2/post/publish/content/init/";
 
           const photoBody: Record<string, unknown> = {
             source_info: {
@@ -156,7 +159,7 @@ export async function POST(request: Request) {
             };
             photoBody.source_info = {
               source: "PULL_FROM_URL",
-              photo_cover_index: 1,
+              photo_cover_index: 0,
               photo_images: imageUrls,
             };
             // photoBody.post_mode = postMode;
@@ -184,7 +187,12 @@ export async function POST(request: Request) {
           try {
             data_ = JSON.parse(responseText);
           } catch {
-            dataOutput.push({ error: { code: String(responseStatus), message: responseText.slice(0, 500) } });
+            dataOutput.push({
+              error: {
+                code: String(responseStatus),
+                message: responseText.slice(0, 500),
+              },
+            });
             break;
           }
 
