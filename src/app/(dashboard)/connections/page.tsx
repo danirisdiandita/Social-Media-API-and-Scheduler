@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ export type Connection = {
   connection_slug?: string;
   username?: string;
   is_default_draft?: boolean;
+  tags?: { id: number; name: string }[];
 };
 
 const socialMedia2Logo = {
@@ -80,6 +81,103 @@ export default function ConnectionsPage() {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+
+  // Tags modal state
+  const [tagsModalConnection, setTagsModalConnection] = useState<Connection | null>(null);
+  const [allTags, setAllTags] = useState<{ id: number; name: string }[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [tagSuggestions, setTagSuggestions] = useState<{ id: number; name: string }[]>([]);
+  const [tagLoading, setTagLoading] = useState(false);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const openTagsModal = async (connection: Connection) => {
+    setTagsModalConnection(connection);
+    setTagInput("");
+    setTagSuggestions([]);
+    const res = await fetch("/api/tag");
+    if (res.ok) {
+      const { data } = await res.json();
+      setAllTags(data || []);
+    }
+  };
+
+  const closeTagsModal = () => {
+    setTagsModalConnection(null);
+    setTagInput("");
+    setTagSuggestions([]);
+  };
+
+  const filterSuggestions = (q: string) => {
+    if (!q.trim()) {
+      setTagSuggestions([]);
+      return;
+    }
+    const assignedIds = new Set(tagsModalConnection?.tags?.map((t) => t.id) || []);
+    const filtered = allTags.filter(
+      (t) => !assignedIds.has(t.id) && t.name.toLowerCase().includes(q.toLowerCase())
+    );
+    setTagSuggestions(filtered.slice(0, 5));
+  };
+
+  const addTag = async (tag: { id: number; name: string }) => {
+    if (!tagsModalConnection) return;
+    setTagLoading(true);
+    const res = await fetch(`/api/connection/${tagsModalConnection.id}/tags`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add", tagId: tag.id }),
+    });
+    if (res.ok) {
+      setTagsModalConnection((prev) =>
+        prev
+          ? { ...prev, tags: [...(prev.tags || []), tag] }
+          : prev
+      );
+      setTagInput("");
+      setTagSuggestions([]);
+      mutate();
+    }
+    setTagLoading(false);
+  };
+
+  const removeTag = async (tagId: number) => {
+    if (!tagsModalConnection) return;
+    const res = await fetch(`/api/connection/${tagsModalConnection.id}/tags`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "remove", tagId }),
+    });
+    if (res.ok) {
+      setTagsModalConnection((prev) =>
+        prev
+          ? { ...prev, tags: (prev.tags || []).filter((t) => t.id !== tagId) }
+          : prev
+      );
+      mutate();
+    }
+  };
+
+  const createAndAddTag = async () => {
+    if (!tagsModalConnection || !tagInput.trim()) return;
+    setTagLoading(true);
+    const res = await fetch("/api/tag", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: tagInput.trim() }),
+    });
+    if (res.ok) {
+      const { data: newTag } = await res.json();
+      setAllTags((prev) => [...prev, newTag]);
+      await addTag(newTag);
+    }
+    setTagLoading(false);
+  };
+
+  const isNewTag = tagInput.trim() && !allTags.some(
+    (t) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
+  ) && !tagSuggestions.some(
+    (s) => s.name.toLowerCase() === tagInput.trim().toLowerCase()
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -338,9 +436,29 @@ export default function ConnectionsPage() {
                             )}
                           </span>
                         </div>
+                        {connection.tags && connection.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {connection.tags.map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="border-2 border-black bg-[#FBE7C6] px-2 py-0.5 text-[10px] font-bold uppercase"
+                              >
+                                {tag.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          className="cursor-pointer border-2 border-black rounded-none h-8 px-2 text-[10px] font-bold uppercase"
+                          onClick={() => openTagsModal(connection)}
+                        >
+                          Tags
+                        </Button>
                         <button
                           onClick={() =>
                             handleToggleDraft(
@@ -431,6 +549,87 @@ export default function ConnectionsPage() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!tagsModalConnection} onOpenChange={() => closeTagsModal()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Tags — {tagsModalConnection?.display_name || "Connection"}
+            </DialogTitle>
+            <DialogDescription>
+              Manage tags for this connection
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+              {tagsModalConnection?.tags && tagsModalConnection.tags.length > 0 ? (
+                tagsModalConnection.tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="border-2 border-black bg-[#FBE7C6] px-2 py-1 text-xs font-bold uppercase flex items-center gap-1"
+                  >
+                    {tag.name}
+                    <button
+                      onClick={() => removeTag(tag.id)}
+                      className="cursor-pointer hover:text-red-600 ml-1"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <p className="text-xs text-gray-500">No tags assigned</p>
+              )}
+            </div>
+
+            <div className="relative">
+              <Input
+                ref={tagInputRef}
+                value={tagInput}
+                onChange={(e) => {
+                  setTagInput(e.target.value);
+                  filterSuggestions(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (isNewTag) {
+                      createAndAddTag();
+                    } else if (tagSuggestions.length > 0) {
+                      addTag(tagSuggestions[0]);
+                    }
+                  }
+                }}
+                placeholder="Type tag name..."
+                className="border-2 border-black rounded-none h-10 text-sm"
+                disabled={tagLoading}
+              />
+              {(tagSuggestions.length > 0 || isNewTag) && tagInput.trim() && (
+                <div className="absolute top-full left-0 right-0 border-2 border-black bg-white z-10">
+                  {tagSuggestions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => addTag(s)}
+                      className="block w-full text-left px-3 py-2 text-sm font-bold hover:bg-[#FBE7C6] cursor-pointer"
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                  {isNewTag && (
+                    <button
+                      onClick={createAndAddTag}
+                      className="block w-full text-left px-3 py-2 text-sm font-bold hover:bg-[#B4F8C8] cursor-pointer border-t-2 border-black"
+                    >
+                      Create &ldquo;{tagInput.trim()}&rdquo;
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

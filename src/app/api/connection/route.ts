@@ -33,6 +33,7 @@ export async function GET(request: Request) {
       orderBy: { id: "asc" },
       skip,
       take: limit,
+      include: { tags: { select: { id: true, name: true } } },
     }),
     prisma.connection.count({
       where,
