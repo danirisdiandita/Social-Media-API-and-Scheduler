@@ -162,7 +162,7 @@ export async function POST(request: Request) {
               photo_cover_index: 0,
               photo_images: imageUrls,
             };
-            // photoBody.post_mode = postMode;
+            photoBody.post_mode = postMode;
             photoBody.media_type = "PHOTO";
           }
 
