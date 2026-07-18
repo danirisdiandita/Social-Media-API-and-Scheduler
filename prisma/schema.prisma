@@ -20,6 +20,7 @@ model User {
   ApiKey      ApiKey[]
   Connection  Connection[]
   PostHistory PostHistory[]
+  tags        Tag[]
 
   @@map("user")
 }
@@ -61,9 +62,23 @@ model Connection {
   avatar_url         String?
   is_default_draft   Boolean       @default(false)
   PostHistory        PostHistory[]
+  tags               Tag[]
 
   @@index([user_id])
   @@map("connection")
+}
+
+model Tag {
+  id         Int          @id @default(autoincrement())
+  user_id    Int
+  name       String
+  created_at DateTime     @default(now())
+  user       User         @relation(fields: [user_id], references: [id])
+  connections Connection[]
+
+  @@unique([user_id, name])
+  @@index([user_id])
+  @@map("tag")
 }
 
 model PostHistory {

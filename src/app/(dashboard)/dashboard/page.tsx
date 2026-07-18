@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { FileText, Link2, Key, BookOpen, Image as ImageIcon, Video as VideoIcon } from 'lucide-react'
 
 interface PortalCard {
@@ -53,22 +53,24 @@ const portalCards: PortalCard[] = [
 
 const DashboardPage = () => {
   return (
-    <div className="p-8 bg-[#B9F8FE]">
-      <div className="mb-8">
+    <div className="p-4 md:p-8 bg-[#B9F8FE]">
+      <div className="mb-8 px-2 md:px-0">
         <h1 className="text-4xl font-black mb-2">Dashboard</h1>
         <p className="text-lg text-gray-600">Choose where you want to go</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {portalCards.map((card) => (
           <Link key={card.title} href={card.url} className="block">
-            <Card className="cursor-pointer hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all h-full">
-              <CardHeader>
-                <div className={`w-16 h-16 ${card.color} border-4 border-black flex items-center justify-center mb-4`}>
-                  <card.icon className="w-8 h-8" />
+            <Card className="cursor-pointer hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all h-full p-4 md:p-8">
+              <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-0">
+                <div className={`w-12 h-12 md:w-16 md:h-16 ${card.color} border-4 border-black shrink-0 flex items-center justify-center md:mb-4`}>
+                  <card.icon className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
-                <CardTitle>{card.title}</CardTitle>
-                <CardDescription>{card.description}</CardDescription>
-              </CardHeader>
+                <div className="min-w-0">
+                  <h3 className="text-lg md:text-2xl font-black mb-1 md:mb-3">{card.title}</h3>
+                  <p className="text-sm md:text-lg text-gray-500">{card.description}</p>
+                </div>
+              </div>
             </Card>
           </Link>
         ))}
