@@ -9,6 +9,7 @@ export const usePost = () => {
         privacy: string,
         media_type: string,
         media_ids: string[],
+        post_mode?: string,
         disable_comment?: boolean,
         disable_duet?: boolean,
         disable_stitch?: boolean,
