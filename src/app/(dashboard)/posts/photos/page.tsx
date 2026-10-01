@@ -134,7 +134,7 @@ const PhotoPostPage = () => {
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedConnections, setSelectedConnections] = useState<string[]>([]);
-  const [postType, setPostType] = useState<"direct" | "schedule">("direct");
+  const [postType, setPostType] = useState<"direct" | "schedule" | "draft">("direct");
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(
     new Date(),
   );
@@ -374,6 +374,7 @@ const PhotoPostPage = () => {
       privacy: activePrivacy,
       media_type: "PHOTO",
       media_ids: imageIds,
+      post_mode: postType === "draft" ? "UPLOAD_AS_DRAFT" : "DIRECT_POST",
       disable_comment:
         interactionSettings[selectedConnections[0]]?.comment === false,
       disable_duet: interactionSettings[selectedConnections[0]]?.duet === false,
@@ -387,7 +388,13 @@ const PhotoPostPage = () => {
     console.log("postPayload", JSON.stringify(postPayload, null, 2));
     try {
       const postResponse = await doPosting(postPayload);
-      if (
+      if (postType === "draft" && postResponse) {
+        setPostSuccess(true);
+        toast.success("Photos uploaded to TikTok drafts.", {
+          duration: 5000,
+          position: "top-center",
+        });
+      } else if (
         postResponse &&
         postResponse.postHistoryIds &&
         postResponse.postHistoryIds.length > 0
@@ -505,7 +512,9 @@ const PhotoPostPage = () => {
             </h1>
             <p className="text-sm font-medium">
               {postSuccess
-                ? "Your photos have been posted successfully"
+              ? postType === "draft"
+                ? "Your photos have been uploaded to TikTok drafts"
+                : "Your photos have been posted successfully"
                 : "Upload images and share them with your connections"}
             </p>
           </div>
@@ -523,10 +532,14 @@ const PhotoPostPage = () => {
                 </div>
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl font-black">
-                    Photos Posted Successfully!
+                    {postType === "draft"
+                      ? "Photos Uploaded to Drafts!"
+                      : "Photos Posted Successfully!"}
                   </h2>
                   <p className="text-sm font-medium">
-                    Your photos have been shared with your selected connections.
+                    {postType === "draft"
+                      ? "Open the TikTok inbox notification to continue editing and publish."
+                      : "Your photos have been shared with your selected connections."}
                   </p>
                 </div>
                 <div className="flex gap-3 pt-4">
@@ -1273,6 +1286,14 @@ const PhotoPostPage = () => {
                         <Send className="w-4 h-4" />
                         <span>Post Directly</span>
                       </Label>
+                      <RadioGroupItem value="draft" id="draft" />
+                      <Label
+                        htmlFor="draft"
+                        className="flex items-center gap-2 cursor-pointer flex-1"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span>Upload as Draft</span>
+                      </Label>
                       <RadioGroupItem
                         value="schedule"
                         id="schedule"
@@ -1470,10 +1491,15 @@ const PhotoPostPage = () => {
                                 <Send className="w-5 h-5" />
                                 Post Now
                               </>
-                            ) : (
+                            ) : postType === "schedule" ? (
                               <>
                                 <CalendarIcon className="w-5 h-5" />
                                 Schedule Post
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-5 h-5" />
+                                Upload as Draft
                               </>
                             )}
                           </Button>

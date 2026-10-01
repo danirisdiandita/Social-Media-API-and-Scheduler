@@ -86,6 +86,7 @@ export async function POST(request: Request) {
     const disableStitch = body.disable_stitch ?? false
     const brandOrganicToggle = body.brand_organic_toggle ?? false
     const brandContentToggle = body.brand_content_toggle ?? false
+    const postMode = body.post_mode || 'DIRECT_POST'
 
     const post_history_obj = []
 
@@ -161,6 +162,7 @@ export async function POST(request: Request) {
                         return `${Config.NEXT_PUBLIC_URL}/api/file/${mediaId}`
                     }))
 
+                    const isDraft = postMode === 'UPLOAD_AS_DRAFT'
                     const response = await fetch('https://open.tiktokapis.com/v2/post/publish/content/init/', {
                         method: 'POST',
                         headers: {
@@ -168,19 +170,21 @@ export async function POST(request: Request) {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            post_info: {
-                                title: title,
-                                description: caption,
-                                disable_comment: disableComment,
-                                privacy_level: privacy,
-                                auto_add_music: true
-                            },
+                            post_info: isDraft
+                                ? { title, description: caption }
+                                : {
+                                    title,
+                                    description: caption,
+                                    disable_comment: disableComment,
+                                    privacy_level: privacy,
+                                    auto_add_music: true
+                                },
                             source_info: {
                                 source: "PULL_FROM_URL",
                                 photo_cover_index: 1,
                                 photo_images: imageUrls
                             },
-                            post_mode: "DIRECT_POST",
+                            post_mode: isDraft ? "MEDIA_UPLOAD" : "DIRECT_POST",
                             media_type: "PHOTO"
                         })
                     });
